@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import DashboardKpis from "@/components/DashboardKpis";
@@ -9,12 +9,14 @@ import RecentLeads from "@/components/RecentLeads";
 import MiaAssistantWidget from "@/components/MiaAssistantWidget";
 import PlansModal from "@/components/PlansModal";
 import NewItemModal from "@/components/NewItemModal";
+import FinancialModule from "@/components/FinancialModule";
 import {
   INITIAL_APPOINTMENTS,
   INITIAL_LEADS,
+  INITIAL_TASKS,
   NICHES,
 } from "@/data/mockData";
-import { Appointment, Lead, NicheConfig } from "@/types/crm";
+import { Appointment, Lead, NicheConfig, TaskItem } from "@/types/crm";
 import {
   Sparkles,
   Calendar,
@@ -25,6 +27,11 @@ import {
   Zap,
   Smartphone,
   CheckCircle2,
+  DollarSign,
+  CheckSquare,
+  FileText,
+  BarChart3,
+  Plus,
 } from "lucide-react";
 
 export default function Home() {
@@ -37,10 +44,34 @@ export default function Home() {
     "agendamento" | "lead" | "cliente" | "tarefa" | null
   >(null);
 
-  // App data states
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(INITIAL_APPOINTMENTS);
+  // App data states (backed by persistent API)
+  const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+
+  // Load persistent data from API on start
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [appRes, leadRes] = await Promise.all([
+          fetch("/api/appointments"),
+          fetch("/api/leads"),
+        ]);
+        const appJson = await appRes.json();
+        const leadJson = await leadRes.json();
+
+        if (appJson.success && appJson.data?.length > 0) {
+          setAppointments(appJson.data);
+        }
+        if (leadJson.success && leadJson.data?.length > 0) {
+          setLeads(leadJson.data);
+        }
+      } catch (err) {
+        console.warn("Usando dados iniciais locais:", err);
+      }
+    }
+    loadData();
+  }, []);
 
   const handleAddAppointment = (newApp: Appointment) => {
     setAppointments((prev) => [newApp, ...prev]);
@@ -48,6 +79,12 @@ export default function Home() {
 
   const handleAddLead = (newLead: Lead) => {
     setLeads((prev) => [newLead, ...prev]);
+  };
+
+  const handleToggleTask = (taskId: string) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
+    );
   };
 
   return (
@@ -86,21 +123,34 @@ export default function Home() {
                 Bom dia, Thayná! 👋
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 mt-1">
-                Aqui está o resumo em tempo real da sua empresa hoje.
+                Aqui está o resumo em tempo real da sua empresa com backend persistente.
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                onClick={() => setActiveModule("financeiro")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
+                  activeModule === "financeiro"
+                    ? "bg-[#111111] text-[#FFC107]"
+                    : "bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800"
+                }`}
+              >
+                <DollarSign size={15} className="text-[#FFC107]" />
+                <span>Fluxo de Caixa</span>
+              </button>
+
               <button
                 onClick={() => setIsMiaAssistantOpen(true)}
-                className="px-4 py-2.5 bg-[#111111] text-white hover:bg-black rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 group"
+                className="px-4 py-2.5 bg-[#111111] text-white hover:bg-black rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 group"
               >
                 <span>🐝 Secretária MIA</span>
                 <span className="w-2 h-2 rounded-full bg-[#FFC107] animate-pulse" />
               </button>
+
               <button
                 onClick={() => setNewItemType("agendamento")}
-                className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black rounded-xl text-xs font-bold transition-all shadow-sm"
+                className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black rounded-xl text-xs font-bold transition-all shadow-xs"
               >
                 + Novo Agendamento
               </button>
@@ -112,7 +162,10 @@ export default function Home() {
             <>
               {/* Top 5 KPI Cards */}
               <section>
-                <DashboardKpis currentNiche={currentNiche} />
+                <DashboardKpis
+                  currentNiche={currentNiche}
+                  onNavigateModule={(mod) => setActiveModule(mod)}
+                />
               </section>
 
               {/* Two Column Grid: Today's Agenda & Recent Leads */}
@@ -167,21 +220,21 @@ export default function Home() {
                       <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900">Multi-tenant Seguro</h4>
+                      <h4 className="text-xs font-bold text-zinc-900">Banco SQLite Persistente</h4>
                       <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Dados 100% isolados por empresa com criptografia e LGPD.
+                        Transações, clientes e agendamentos salvos em banco local.
                       </p>
                     </div>
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/60 flex items-start gap-3">
                     <div className="p-2 rounded-xl bg-white text-blue-600 shadow-2xs">
-                      <Smartphone size={18} />
+                      <DollarSign size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900">App Instalável (PWA)</h4>
+                      <h4 className="text-xs font-bold text-zinc-900">Fluxo de Caixa Real</h4>
                       <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Acesso rápido na tela inicial do celular com ícone MIA.
+                        Gráficos de faturamento, margem e extrato de entradas e saídas.
                       </p>
                     </div>
                   </div>
@@ -200,6 +253,11 @@ export default function Home() {
                 </div>
               </section>
             </>
+          )}
+
+          {/* Module: Financeiro (Full Cash Flow & Billing Charts) */}
+          {activeModule === "financeiro" && (
+            <FinancialModule currentNiche={currentNiche} />
           )}
 
           {/* Module: Clientes */}
@@ -328,6 +386,99 @@ export default function Home() {
                 onViewAll={() => {}}
                 onSelectAppointment={() => {}}
               />
+            </div>
+          )}
+
+          {/* Module: Tarefas */}
+          {activeModule === "tarefas" && (
+            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
+                <div>
+                  <h2 className="text-base font-bold text-zinc-900">
+                    Tarefas & Checklists de Operação
+                  </h2>
+                  <p className="text-xs text-zinc-500">
+                    Organização diária da equipe para o nicho {currentNiche.name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setNewItemType("tarefa")}
+                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                >
+                  + Nova Tarefa
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => handleToggleTask(task.id)}
+                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
+                      task.completed
+                        ? "bg-zinc-50 border-zinc-200 opacity-60"
+                        : "bg-white border-zinc-200/80 hover:border-[#FFC107]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${
+                          task.completed
+                            ? "bg-[#10B981] border-[#10B981] text-white"
+                            : "border-zinc-300 bg-white"
+                        }`}
+                      >
+                        {task.completed && <CheckCircle2 size={13} />}
+                      </div>
+                      <span
+                        className={`text-xs font-semibold ${
+                          task.completed ? "line-through text-zinc-400" : "text-zinc-900"
+                        }`}
+                      >
+                        {task.title}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-zinc-400">{task.dueDate}</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          task.priority === "alta"
+                            ? "bg-red-50 text-red-600"
+                            : task.priority === "media"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Module: Outros Módulos (Fallback informativo) */}
+          {!["dashboard", "financeiro", "clientes", "leads", "agenda", "tarefas"].includes(
+            activeModule
+          ) && (
+            <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#FFF8E7] text-[#FFC107] flex items-center justify-center mx-auto text-2xl font-bold">
+                🐝
+              </div>
+              <h2 className="text-base font-bold text-zinc-900 capitalize">
+                Módulo de {activeModule}
+              </h2>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                Este módulo está conectado à estrutura base do MIA CRM e integrado ao banco de dados SQLite e assistente MIA.
+              </p>
+              <button
+                onClick={() => setActiveModule("dashboard")}
+                className="px-4 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+              >
+                Voltar ao Dashboard
+              </button>
             </div>
           )}
         </main>

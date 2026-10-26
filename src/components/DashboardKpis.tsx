@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Calendar,
@@ -13,9 +13,34 @@ import { NicheConfig } from "@/types/crm";
 
 interface DashboardKpisProps {
   currentNiche: NicheConfig;
+  onNavigateModule?: (module: string) => void;
 }
 
-export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
+export default function DashboardKpis({
+  currentNiche,
+  onNavigateModule,
+}: DashboardKpisProps) {
+  const [revenueText, setRevenueText] = useState("R$ 8.450,00");
+
+  useEffect(() => {
+    async function loadFinancialKpi() {
+      try {
+        const res = await fetch("/api/financial/summary?month=2026-10");
+        const json = await res.json();
+        if (json.success && json.data) {
+          const formatted = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(json.data.totalRevenue);
+          setRevenueText(formatted);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar KPI faturamento:", err);
+      }
+    }
+    loadFinancialKpi();
+  }, []);
+
   const kpis = [
     {
       id: "clientes",
@@ -24,6 +49,7 @@ export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
       growth: "+ 12%",
       isPositive: true,
       icon: Users,
+      module: "clientes",
     },
     {
       id: "agendamentos",
@@ -32,6 +58,7 @@ export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
       growth: "+ 38%",
       isPositive: true,
       icon: Calendar,
+      module: "agenda",
     },
     {
       id: "atendimentos",
@@ -40,6 +67,7 @@ export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
       growth: "+ 18%",
       isPositive: true,
       icon: CheckCircle2,
+      module: "agenda",
     },
     {
       id: "tarefas",
@@ -48,15 +76,17 @@ export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
       growth: "+ 2%",
       isPositive: false,
       icon: Clock,
+      module: "tarefas",
     },
     {
       id: "faturamento",
       title: "Faturamento do mês",
-      value: "R$ 8.450,00",
-      growth: "+ 15%",
+      value: revenueText,
+      growth: "+ 18.4%",
       isPositive: true,
       icon: DollarSign,
       highlight: true,
+      module: "financeiro",
     },
   ];
 
@@ -67,9 +97,10 @@ export default function DashboardKpis({ currentNiche }: DashboardKpisProps) {
         return (
           <div
             key={kpi.id}
-            className={`rounded-2xl p-4 transition-all duration-200 border ${
+            onClick={() => onNavigateModule && onNavigateModule(kpi.module)}
+            className={`rounded-2xl p-4 transition-all duration-200 border cursor-pointer ${
               kpi.highlight
-                ? "bg-gradient-to-br from-[#1A1A1A] to-[#111111] text-white border-black/40 shadow-md col-span-2 sm:col-span-1"
+                ? "bg-gradient-to-br from-[#1A1A1A] to-[#111111] text-white border-black/40 shadow-md col-span-2 sm:col-span-1 hover:border-[#FFC107]"
                 : "bg-white text-zinc-900 border-zinc-200/80 shadow-xs hover:border-[#FFC107]/60"
             }`}
           >

@@ -30,44 +30,81 @@ export default function NewItemModal({
   const [price, setPrice] = useState("120");
   const [channel, setChannel] = useState<"whatsapp" | "instagram">("whatsapp");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
-    if (type === "agendamento" || type === "cliente") {
-      const initials = name
-        ? name
-            .split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase()
-        : "NC";
+    try {
+      if (type === "agendamento" || type === "cliente") {
+        const initials = name
+          ? name
+              .split(" ")
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase()
+          : "NC";
 
-      const newApp: Appointment = {
-        id: `app-${Date.now()}`,
-        clientName: name || "Novo Cliente",
-        clientInitials: initials,
-        service: service || `${currentNiche.serviceLabel} Padrão`,
-        time: time,
-        endTime: `${parseInt(time.split(":")[0])}:45`,
-        price: parseFloat(price) || 100,
-        status: "agendado",
-      };
-      onAddAppointment(newApp);
-    } else if (type === "lead") {
-      const newLead: Lead = {
-        id: `lead-${Date.now()}`,
-        name: name || "Lead Interessado",
-        message: message || "Olá, gostaria de mais informações!",
-        channel: channel,
-        status: "novo",
-        timeAgo: "agora mesmo",
-      };
-      onAddLead(newLead);
+        const newApp: Appointment = {
+          id: `app-${Date.now()}`,
+          clientName: name || "Novo Cliente",
+          clientInitials: initials,
+          service: service || `${currentNiche.serviceLabel} Padrão`,
+          time: time,
+          endTime: `${parseInt(time.split(":")[0]) || 16}:45`,
+          price: parseFloat(price) || 100,
+          status: "agendado",
+        };
+
+        await fetch("/api/appointments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: newApp.clientName,
+            clientInitials: newApp.clientInitials,
+            service: newApp.service,
+            time: newApp.time,
+            endTime: newApp.endTime,
+            price: newApp.price,
+            status: newApp.status,
+            nicheId: currentNiche.id,
+            createTransaction: true,
+          }),
+        });
+
+        onAddAppointment(newApp);
+      } else if (type === "lead") {
+        const newLead: Lead = {
+          id: `lead-${Date.now()}`,
+          name: name || "Lead Interessado",
+          message: message || "Olá, gostaria de mais informações!",
+          channel: channel,
+          status: "novo",
+          timeAgo: "Agora mesmo",
+        };
+
+        await fetch("/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: newLead.name,
+            message: newLead.message,
+            channel: newLead.channel,
+            status: newLead.status,
+            nicheId: currentNiche.id,
+          }),
+        });
+
+        onAddLead(newLead);
+      }
+    } catch (err) {
+      console.error("Erro ao salvar item:", err);
+    } finally {
+      setSubmitting(false);
+      onClose();
     }
-
-    onClose();
   };
 
   const titles = {
@@ -213,10 +250,11 @@ export default function NewItemModal({
             </button>
             <button
               type="submit"
+              disabled={submitting}
               className="px-5 py-2 bg-[#FFC107] hover:bg-[#E5AC06] text-black font-bold rounded-xl shadow-xs flex items-center gap-1.5"
             >
               <Plus size={15} />
-              <span>Salvar no MIA CRM</span>
+              <span>{submitting ? "Salvando..." : "Salvar no MIA CRM"}</span>
             </button>
           </div>
         </form>

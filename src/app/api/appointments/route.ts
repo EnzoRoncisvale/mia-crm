@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server";
+import { getDb } from "@/lib/db";
+import { Appointment } from "@/types/crm";
+
+export async function GET() {
+  try {
+    const db = getDb();
+    const rows = db.prepare(`
+      SELECT * FROM appointments ORDER BY time ASC
+    `).all() as Array<{
+      id: string;
+      client_name: string;
+      client_initials: string | null;
+      service: string;
+      time: string;
+      end_time: string | null;
+      status: Appointment["status"];
+      price: number;
+    }>;
+
+    const appointments: Appointment[] = rows.map((r) => ({
+      id: r.id,
+      clientName: r.client_name,
+      clientInitials: r.client_initials || r.client_name.substring(0, 2).toUpperCase(),
+      service: r.service,
+      time: r.time,
+      endTime: r.end_time || "",
+      status: r.status,
+      price: Number(r.price),
+    }));
+
+    return NextResponse.json({ success: true, data: appointments });
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao buscar agendamentos" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const db = getDb();
+
+    const id = `app-${Date.now()}`;
+    const initials =
+      body.clientInitials ||
+      body.clientName
+        .split(" ")
+        .map((p: string) => p[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase();
+
+    const insert = db.prepare(`
+      INSERT INTO appointments (
+        id, client_name, client_initials, service, time, end_time, date, status, price, niche_id, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    insert.run(
+      id,
+      body.clientName,
+      initials,
+      body.service,
+      body.time,
+      body.endTime || "",
+      body.date || "2026-10-26",
+      body.status || "agendado",
+      Number(body.price || 0),
+      body.nicheId || "beleza_estetica",
+      new Date().toISOString()
+    );
+
+    // Auto-create an Entrada in transactions if price > 0
+    if (body.price && Number(body.price) > 0 && body.createTransaction !== false) {
+      const insertTx = db.prepare(`
+        INSERT INTO transactions (
+          id, type, description, amount, category, payment_method, date, status, client_name, niche_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      insertTx.run(
+        `tx-app-${id}`,
+        "entrada",
+        `${body.service} - ${body.clientName}`,
+        Number(body.price),
+        "Serviços & Procedimentos",
+        "pix",
+        body.date || "2026-10-26",
+        body.status === "confirmado" || body.status === "concluido" ? "pago" : "pendente",
+        body.clientName,
+        body.nicheId || "beleza_estetica",
+        new Date().toISOString()
+      );
+    }
+
+    const createdAppointment: Appointment = {
+      id,
+      clientName: body.clientName,
+      clientInitials: initials,
+      service: body.service,
+      time: body.time,
+      endTime: body.endTime || "",
+      status: body.status || "agendado",
+      price: Number(body.price || 0),
+    };
+
+    return NextResponse.json({ success: true, data: createdAppointment }, { status: 201 });
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    return NextResponse.json(
+      { success: false, error: "Erro ao criar agendamento" },
+      { status: 500 }
+    );
+  }
+}
