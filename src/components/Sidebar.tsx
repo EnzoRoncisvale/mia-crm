@@ -17,8 +17,9 @@ import {
   Settings,
   X,
   Crown,
+  Shield,
 } from "lucide-react";
-import { NicheConfig } from "@/types/crm";
+import { NicheConfig, UserRole, USER_ROLES } from "@/types/crm";
 
 interface SidebarProps {
   activeModule: string;
@@ -27,6 +28,7 @@ interface SidebarProps {
   setIsOpenMobile: (open: boolean) => void;
   currentNiche: NicheConfig;
   onOpenPlans: () => void;
+  currentRole?: UserRole;
 }
 
 export const MENU_ITEMS = [
@@ -34,14 +36,14 @@ export const MENU_ITEMS = [
   { id: "clientes", label: "Clientes", icon: Users },
   { id: "leads", label: "Leads", icon: Target, badge: "5 novos" },
   { id: "agenda", label: "Agenda", icon: Calendar, badge: "Hoje: 9" },
-  { id: "atendimentos", label: "Atendimentos", icon: Sparkles },
+  { id: "servicos", label: "Catálogo Serviços", icon: Sparkles },
   { id: "tarefas", label: "Tarefas", icon: CheckSquare, badge: "7" },
-  { id: "processos", label: "Processos", icon: GitBranch },
-  { id: "financeiro", label: "Financeiro", icon: DollarSign },
+  { id: "processos", label: "Processos & Checklists", icon: GitBranch, badge: "Novo" },
+  { id: "financeiro", label: "Financeiro & Caixa", icon: DollarSign },
   { id: "documentos", label: "Documentos", icon: FileText },
   { id: "comunicacoes", label: "Comunicações", icon: MessageCircle },
   { id: "relatorios", label: "Relatórios", icon: BarChart3 },
-  { id: "equipe", label: "Equipe", icon: UserCheck },
+  { id: "equipe", label: "Equipe (RBAC)", icon: UserCheck },
   { id: "configuracoes", label: "Configurações", icon: Settings },
 ];
 
@@ -52,7 +54,10 @@ export default function Sidebar({
   setIsOpenMobile,
   currentNiche,
   onOpenPlans,
+  currentRole = "admin_empresa",
 }: SidebarProps) {
+  const allowed = USER_ROLES[currentRole]?.allowedModules || [];
+
   return (
     <>
       {/* Overlay Mobile */}
@@ -95,44 +100,59 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* Niche Badge Tag */}
-        <div className="px-4 py-2.5 bg-white/5 border-b border-white/5 flex items-center justify-between text-xs">
-          <span className="text-zinc-400">Nicho:</span>
-          <span className="font-medium text-[#FFC107] bg-[#FFC107]/10 px-2 py-0.5 rounded-full border border-[#FFC107]/30 truncate max-w-[140px]">
-            {currentNiche.name}
-          </span>
+        {/* Niche & Role Status */}
+        <div className="px-4 py-2.5 bg-white/5 border-b border-white/5 flex flex-col gap-1 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-400">Nicho:</span>
+            <span className="font-medium text-[#FFC107] bg-[#FFC107]/10 px-2 py-0.5 rounded-full border border-[#FFC107]/30 truncate max-w-[140px]">
+              {currentNiche.name}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-zinc-500">Perfil RBAC:</span>
+            <span className="text-zinc-300 font-semibold">{USER_ROLES[currentRole].label}</span>
+          </div>
         </div>
 
-        {/* Navigation Navigation Menu */}
+        {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
           {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;
+            const isPermitted = allowed.includes(item.id);
 
             return (
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveModule(item.id);
-                  setIsOpenMobile(false);
+                  if (isPermitted) {
+                    setActiveModule(item.id);
+                    setIsOpenMobile(false);
+                  } else {
+                    alert(
+                      `Acesso Restrito: Seu perfil atual (${USER_ROLES[currentRole].label}) não possui permissão para acessar o módulo ${item.label}.`
+                    );
+                  }
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-[#FFC107] text-[#111111] font-semibold shadow-sm"
-                    : "text-zinc-300 hover:text-white hover:bg-white/10"
+                    ? "bg-[#FFC107] text-[#111111] font-bold shadow-sm"
+                    : isPermitted
+                    ? "text-zinc-300 hover:text-white hover:bg-white/10"
+                    : "text-zinc-600 opacity-40 cursor-not-allowed"
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Icon
-                    size={18}
-                    className={isActive ? "text-[#111111]" : "text-zinc-400"}
+                    size={16}
+                    className={isActive ? "text-[#111111]" : isPermitted ? "text-zinc-400" : "text-zinc-600"}
                   />
                   <span>{item.label}</span>
                 </div>
 
-                {item.badge && (
+                {item.badge && isPermitted && (
                   <span
-                    className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
                       isActive
                         ? "bg-black/15 text-black"
                         : "bg-white/10 text-[#FFC107]"
@@ -158,19 +178,13 @@ export default function Sidebar({
               </span>
             </div>
             <p className="text-[11px] text-zinc-300 mb-2.5">
-              142/150 créditos de IA disponíveis
+              Multi-tenant, 15 nichos e assistente IA integrados.
             </p>
-            <div className="w-full bg-zinc-800 rounded-full h-1.5 mb-3 overflow-hidden">
-              <div
-                className="bg-[#FFC107] h-full rounded-full"
-                style={{ width: "85%" }}
-              />
-            </div>
             <button
               onClick={onOpenPlans}
-              className="w-full text-xs font-semibold py-1.5 px-2 rounded-lg bg-[#FFC107]/15 text-[#FFC107] hover:bg-[#FFC107] hover:text-black transition-colors"
+              className="w-full py-1.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black font-bold text-xs rounded-lg transition-colors text-center"
             >
-              Ver Planos & Upgrades
+              Ver Planos & Cotas
             </button>
           </div>
         </div>

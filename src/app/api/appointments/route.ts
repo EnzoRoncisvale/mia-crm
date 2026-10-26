@@ -44,6 +44,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const db = getDb();
 
+    const targetDate = body.date || "2026-10-26";
+    const targetTime = body.time;
+
+    // 3.3 Prevenção e Bloqueio de Conflito de Horário (Escopo MIA CRM)
+    if (!body.allowConflict) {
+      const existingConflict = db.prepare(`
+        SELECT client_name, service, time FROM appointments 
+        WHERE date = ? AND time = ? AND status != 'cancelado'
+      `).get(targetDate, targetTime) as { client_name: string; service: string; time: string } | undefined;
+
+      if (existingConflict) {
+        return NextResponse.json(
+          {
+            success: false,
+            isConflict: true,
+            error: `Conflito de agenda: já existe um atendimento marcado para às ${targetTime} (${existingConflict.client_name} - ${existingConflict.service}). Deseja autorizar um encaixe?`,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const id = `app-${Date.now()}`;
     const initials =
       body.clientInitials ||
@@ -67,7 +89,7 @@ export async function POST(request: Request) {
       body.service,
       body.time,
       body.endTime || "",
-      body.date || "2026-10-26",
+      targetDate,
       body.status || "agendado",
       Number(body.price || 0),
       body.nicheId || "beleza_estetica",
@@ -89,7 +111,7 @@ export async function POST(request: Request) {
         Number(body.price),
         "Serviços & Procedimentos",
         "pix",
-        body.date || "2026-10-26",
+        targetDate,
         body.status === "confirmado" || body.status === "concluido" ? "pago" : "pendente",
         body.clientName,
         body.nicheId || "beleza_estetica",

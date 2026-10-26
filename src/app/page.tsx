@@ -10,13 +10,15 @@ import MiaAssistantWidget from "@/components/MiaAssistantWidget";
 import PlansModal from "@/components/PlansModal";
 import NewItemModal from "@/components/NewItemModal";
 import FinancialModule from "@/components/FinancialModule";
+import ProcessesModule from "@/components/ProcessesModule";
+import ServicesModule from "@/components/ServicesModule";
 import {
   INITIAL_APPOINTMENTS,
   INITIAL_LEADS,
   INITIAL_TASKS,
   NICHES,
 } from "@/data/mockData";
-import { Appointment, Lead, NicheConfig, TaskItem } from "@/types/crm";
+import { Appointment, Lead, NicheConfig, TaskItem, UserRole } from "@/types/crm";
 import {
   Sparkles,
   Calendar,
@@ -32,11 +34,13 @@ import {
   FileText,
   BarChart3,
   Plus,
+  GitBranch,
 } from "lucide-react";
 
 export default function Home() {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [currentNiche, setCurrentNiche] = useState<NicheConfig>(NICHES[0]); // Beleza e Estética
+  const [currentRole, setCurrentRole] = useState<UserRole>("admin_empresa"); // RBAC (Seção 2.2)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [isMiaAssistantOpen, setIsMiaAssistantOpen] = useState(false);
@@ -44,7 +48,7 @@ export default function Home() {
     "agendamento" | "lead" | "cliente" | "tarefa" | null
   >(null);
 
-  // App data states (backed by persistent API)
+  // App data states (backed by persistent SQLite API)
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
   const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
@@ -97,6 +101,7 @@ export default function Home() {
         setIsOpenMobile={setIsMobileSidebarOpen}
         currentNiche={currentNiche}
         onOpenPlans={() => setIsPlansModalOpen(true)}
+        currentRole={currentRole}
       />
 
       {/* Main Content Area */}
@@ -108,6 +113,8 @@ export default function Home() {
           onSelectNiche={setCurrentNiche}
           onOpenNewItem={(type) => setNewItemType(type)}
           onOpenMiaAssistant={() => setIsMiaAssistantOpen(true)}
+          currentRole={currentRole}
+          onSelectRole={setCurrentRole}
         />
 
         {/* Page Container */}
@@ -123,11 +130,23 @@ export default function Home() {
                 Bom dia, Thayná! 👋
               </h1>
               <p className="text-xs md:text-sm text-zinc-500 mt-1">
-                Aqui está o resumo em tempo real da sua empresa com backend persistente.
+                Aqui está o resumo em tempo real da sua empresa com backend persistente e workflows.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                onClick={() => setActiveModule("processos")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
+                  activeModule === "processos"
+                    ? "bg-[#111111] text-[#FFC107]"
+                    : "bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800"
+                }`}
+              >
+                <GitBranch size={15} className="text-[#FFC107]" />
+                <span>Processos & Checklists</span>
+              </button>
+
               <button
                 onClick={() => setActiveModule("financeiro")}
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
@@ -142,7 +161,7 @@ export default function Home() {
 
               <button
                 onClick={() => setIsMiaAssistantOpen(true)}
-                className="px-4 py-2.5 bg-[#111111] text-white hover:bg-black rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 group"
+                className="px-4 py-2.5 bg-[#111111] text-white hover:bg-black rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 group cursor-pointer"
               >
                 <span>🐝 Secretária MIA</span>
                 <span className="w-2 h-2 rounded-full bg-[#FFC107] animate-pulse" />
@@ -150,7 +169,7 @@ export default function Home() {
 
               <button
                 onClick={() => setNewItemType("agendamento")}
-                className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black rounded-xl text-xs font-bold transition-all shadow-xs"
+                className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
               >
                 + Novo Agendamento
               </button>
@@ -220,9 +239,9 @@ export default function Home() {
                       <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900">Banco SQLite Persistente</h4>
+                      <h4 className="text-xs font-bold text-zinc-900">Multi-tenant & RBAC</h4>
                       <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Transações, clientes e agendamentos salvos em banco local.
+                        6 níveis de acesso, dados isolados e bloqueio de rotas.
                       </p>
                     </div>
                   </div>
@@ -232,9 +251,9 @@ export default function Home() {
                       <DollarSign size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900">Fluxo de Caixa Real</h4>
+                      <h4 className="text-xs font-bold text-zinc-900">Fluxo de Caixa & Gráficos</h4>
                       <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Gráficos de faturamento, margem e extrato de entradas e saídas.
+                        Faturamento, previsão a receber/pagar e extrato completo.
                       </p>
                     </div>
                   </div>
@@ -244,9 +263,9 @@ export default function Home() {
                       <Zap size={18} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-900">Secretária IA 24h</h4>
+                      <h4 className="text-xs font-bold text-zinc-900">Secretária MIA no SQLite</h4>
                       <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Atendimento ágil, agendamentos e lembretes automáticos.
+                        Responde perguntas consultando dados reais do banco.
                       </p>
                     </div>
                   </div>
@@ -255,7 +274,17 @@ export default function Home() {
             </>
           )}
 
-          {/* Module: Financeiro (Full Cash Flow & Billing Charts) */}
+          {/* Module: Processos & Checklists (Seção 3.4) */}
+          {activeModule === "processos" && (
+            <ProcessesModule currentNiche={currentNiche} />
+          )}
+
+          {/* Module: Catálogo de Serviços (Seção 3.2) */}
+          {activeModule === "servicos" && (
+            <ServicesModule currentNiche={currentNiche} />
+          )}
+
+          {/* Module: Financeiro (Fluxo de Caixa & Gráficos de Faturamento) */}
           {activeModule === "financeiro" && (
             <FinancialModule currentNiche={currentNiche} />
           )}
@@ -269,12 +298,12 @@ export default function Home() {
                     Base de {currentNiche.clientLabel}s
                   </h2>
                   <p className="text-xs text-zinc-500">
-                    Histórico completo, fichas e atendimentos
+                    Cadastro único com campos customizáveis para {currentNiche.name}
                   </p>
                 </div>
                 <button
                   onClick={() => setNewItemType("cliente")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                 >
                   + Cadastrar {currentNiche.clientLabel}
                 </button>
@@ -328,7 +357,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={() => setNewItemType("lead")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                 >
                   + Novo Lead
                 </button>
@@ -370,12 +399,12 @@ export default function Home() {
                     Agenda & Compromissos
                   </h2>
                   <p className="text-xs text-zinc-500">
-                    Visualização dos horários marcados para hoje
+                    Visualização com bloqueio de conflitos ativo (Seção 3.3)
                   </p>
                 </div>
                 <button
                   onClick={() => setNewItemType("agendamento")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                 >
                   + Agendar Horário
                 </button>
@@ -403,7 +432,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={() => setNewItemType("tarefa")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                 >
                   + Nova Tarefa
                 </button>
@@ -459,10 +488,17 @@ export default function Home() {
             </div>
           )}
 
-          {/* Module: Outros Módulos (Fallback informativo) */}
-          {!["dashboard", "financeiro", "clientes", "leads", "agenda", "tarefas"].includes(
-            activeModule
-          ) && (
+          {/* Module: Outros Módulos */}
+          {![
+            "dashboard",
+            "financeiro",
+            "clientes",
+            "leads",
+            "agenda",
+            "tarefas",
+            "processos",
+            "servicos",
+          ].includes(activeModule) && (
             <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#FFF8E7] text-[#FFC107] flex items-center justify-center mx-auto text-2xl font-bold">
                 🐝
@@ -475,7 +511,7 @@ export default function Home() {
               </p>
               <button
                 onClick={() => setActiveModule("dashboard")}
-                className="px-4 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs"
+                className="px-4 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
               >
                 Voltar ao Dashboard
               </button>
@@ -492,7 +528,10 @@ export default function Home() {
           if (actionType === "agendar") setNewItemType("agendamento");
           if (actionType === "financeiro") setActiveModule("financeiro");
           if (actionType === "tarefas") setActiveModule("tarefas");
+          if (actionType === "leads") setActiveModule("leads");
+          if (actionType === "processos") setActiveModule("processos");
         }}
+        currentRole={currentRole}
       />
 
       {/* Modal: Planos & Preços */}
