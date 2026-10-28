@@ -12,6 +12,7 @@ import NewItemModal from "@/components/NewItemModal";
 import FinancialModule from "@/components/FinancialModule";
 import ProcessesModule from "@/components/ProcessesModule";
 import ServicesModule from "@/components/ServicesModule";
+import WeeklyCalendar from "@/components/WeeklyCalendar";
 import {
   INITIAL_APPOINTMENTS,
   INITIAL_LEADS,
@@ -392,30 +393,10 @@ export default function Home() {
 
           {/* Module: Agenda */}
           {activeModule === "agenda" && (
-            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-                <div>
-                  <h2 className="text-base font-bold text-zinc-900">
-                    Agenda & Compromissos
-                  </h2>
-                  <p className="text-xs text-zinc-500">
-                    Visualização com bloqueio de conflitos ativo (Seção 3.3)
-                  </p>
-                </div>
-                <button
-                  onClick={() => setNewItemType("agendamento")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-                >
-                  + Agendar Horário
-                </button>
-              </div>
-
-              <TodayAgenda
-                appointments={appointments}
-                onViewAll={() => {}}
-                onSelectAppointment={() => {}}
-              />
-            </div>
+            <WeeklyCalendar
+              currentNiche={currentNiche}
+              onNewAppointment={() => setNewItemType("agendamento")}
+            />
           )}
 
           {/* Module: Tarefas */}

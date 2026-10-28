@@ -28,10 +28,11 @@ export interface Appointment {
   id: string;
   time: string;
   endTime: string;
+  date?: string; // ISO date "YYYY-MM-DD"
   clientName: string;
   clientInitials: string;
   service: string;
-  status: "confirmado" | "em_andamento" | "agendado" | "concluido";
+  status: "confirmado" | "em_andamento" | "agendado" | "concluido" | "cancelado";
   price: number;
 }
 
