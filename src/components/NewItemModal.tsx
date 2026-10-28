@@ -1,8 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Calendar, UserPlus, Target, CheckSquare, Plus, AlertTriangle, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Calendar, UserPlus, Target, CheckSquare, Plus, AlertTriangle, ChevronDown } from "lucide-react";
 import { Appointment, Lead, NicheConfig } from "@/types/crm";
+
+// Gera slots de horário de 30 em 30 min entre 08:00 e 20:00
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let h = 8; h <= 20; h++) {
+    slots.push(`${String(h).padStart(2, "0")}:00`);
+    if (h < 20) slots.push(`${String(h).padStart(2, "0")}:30`);
+  }
+  return slots;
+}
+
+const TIME_SLOTS = generateTimeSlots();
+
+interface ServiceOption {
+  id: string;
+  name: string;
+  price: number;
+  duration_minutes: number;
+}
 
 interface NewItemModalProps {
   isOpen: boolean;
@@ -21,18 +40,20 @@ export default function NewItemModal({
   onAddLead,
   currentNiche,
 }: NewItemModalProps) {
-  if (!isOpen || !type) return null;
-
   // Form states
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
   const [service, setService] = useState("");
-  const [time, setTime] = useState("16:00");
+  const [time, setTime] = useState("09:00");
   const [price, setPrice] = useState("120");
   const [channel, setChannel] = useState<"whatsapp" | "instagram">("whatsapp");
   const [message, setMessage] = useState("");
+
+  // Serviços carregados da API
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   // Niche specific fields (Seção 3.1 do Escopo)
   const [nicheField1, setNicheField1] = useState("");
@@ -40,6 +61,43 @@ export default function NewItemModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+
+  // Carrega serviços da API quando abre modal de agendamento
+  useEffect(() => {
+    if (isOpen && type === "agendamento") {
+      setLoadingServices(true);
+      fetch(`/api/services?nicheId=${currentNiche.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const list: ServiceOption[] = (data.data || data.services || []).map((s: ServiceOption & { durationMinutes?: number }) => ({
+            id: s.id,
+            name: s.name,
+            price: s.price,
+            duration_minutes: s.duration_minutes ?? s.durationMinutes ?? 45,
+          }));
+          setServiceOptions(list);
+          // pré-seleciona o primeiro serviço
+          if (list.length > 0) {
+            setService(list[0].name);
+            setPrice(String(list[0].price));
+          }
+        })
+        .catch(() => setServiceOptions([]))
+        .finally(() => setLoadingServices(false));
+    }
+  }, [isOpen, type, currentNiche.id]);
+
+  // Reset form ao fechar/abrir
+  useEffect(() => {
+    if (!isOpen) {
+      setName(""); setEmail(""); setPhone(""); setDocument("");
+      setService(""); setTime("09:00"); setPrice("120");
+      setMessage(""); setNicheField1(""); setNicheField2("");
+      setConflictWarning(null);
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !type) return null;
 
   const handleSubmit = async (e: React.FormEvent, allowConflict = false) => {
     e.preventDefault();
@@ -286,41 +344,89 @@ export default function NewItemModal({
 
           {type === "agendamento" && (
             <>
+              {/* Dropdown de Serviço */}
               <div>
                 <label className="block font-semibold text-zinc-700 mb-1">
                   {currentNiche.serviceLabel}
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  placeholder="Ex: Alongamento de Cílios / Consulta"
-                  className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#FFC107] focus:bg-white"
-                />
+                <div className="relative">
+                  <select
+                    required
+                    value={service}
+                    onChange={(e) => {
+                      const selected = serviceOptions.find((s) => s.name === e.target.value);
+                      setService(e.target.value);
+                      if (selected) setPrice(String(selected.price));
+                    }}
+                    disabled={loadingServices}
+                    className="w-full px-3 py-2 pr-9 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white appearance-none text-xs"
+                  >
+                    {loadingServices ? (
+                      <option>Carregando serviços...</option>
+                    ) : serviceOptions.length > 0 ? (
+                      <>
+                        <option value="">Selecione um serviço</option>
+                        {serviceOptions.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            {s.name} — R$ {s.price.toFixed(2).replace(".", ",")}
+                          </option>
+                        ))}
+                        <option value="__outro">✏️ Outro (digitar manualmente)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="">Selecione um serviço</option>
+                        <option value="Consulta Padrão">Consulta Padrão</option>
+                        <option value="Atendimento Especial">Atendimento Especial</option>
+                        <option value="__outro">✏️ Outro (digitar manualmente)</option>
+                      </>
+                    )}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                </div>
+                {/* Campo extra se escolher "Outro" */}
+                {service === "__outro" && (
+                  <input
+                    type="text"
+                    required
+                    placeholder={`Nome do ${currentNiche.serviceLabel}`}
+                    onChange={(e) => setService(e.target.value === "" ? "__outro" : e.target.value)}
+                    className="mt-2 w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] text-xs"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {/* Dropdown de Horário */}
                 <div>
                   <label className="block font-semibold text-zinc-700 mb-1">
                     Horário de Início
                   </label>
-                  <input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#FFC107] focus:bg-white"
-                  />
+                  <div className="relative">
+                    <select
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                      className="w-full px-3 py-2 pr-9 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white appearance-none text-xs"
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                  </div>
                 </div>
+                {/* Valor (auto-preenchido pelo serviço, editável) */}
                 <div>
                   <label className="block font-semibold text-zinc-700 mb-1">
-                    Valor Estimado (R$)
+                    Valor (R$)
                   </label>
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#FFC107] focus:bg-white"
+                    className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white text-xs"
                   />
                 </div>
               </div>
