@@ -13,6 +13,8 @@ import FinancialModule from "@/components/FinancialModule";
 import ProcessesModule from "@/components/ProcessesModule";
 import ServicesModule from "@/components/ServicesModule";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
+import WhatsAppTemplates from "@/components/WhatsAppTemplates";
+import ClientProfile from "@/components/ClientProfile";
 import {
   INITIAL_APPOINTMENTS,
   INITIAL_LEADS,
@@ -53,6 +55,12 @@ export default function Home() {
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
   const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+
+  // WhatsApp Templates modal
+  const [whatsAppApp, setWhatsAppApp] = useState<Appointment | null>(null);
+
+  // Client Profile modal
+  const [profileClientName, setProfileClientName] = useState<string | null>(null);
 
   // Load persistent data from API on start
   useEffect(() => {
@@ -195,6 +203,8 @@ export default function Home() {
                     appointments={appointments}
                     onViewAll={() => setActiveModule("agenda")}
                     onSelectAppointment={() => {}}
+                    onWhatsApp={(app) => setWhatsAppApp(app)}
+                    onViewProfile={(name) => setProfileClientName(name)}
                   />
                 </div>
 
@@ -529,6 +539,26 @@ export default function Home() {
         onAddAppointment={handleAddAppointment}
         onAddLead={handleAddLead}
         currentNiche={currentNiche}
+      />
+
+      {/* Modal: WhatsApp Templates */}
+      <WhatsAppTemplates
+        isOpen={whatsAppApp !== null}
+        onClose={() => setWhatsAppApp(null)}
+        appointment={whatsAppApp}
+        currentNiche={currentNiche}
+      />
+
+      {/* Modal: Perfil do Cliente */}
+      <ClientProfile
+        isOpen={profileClientName !== null}
+        onClose={() => setProfileClientName(null)}
+        clientName={profileClientName || ""}
+        currentNiche={currentNiche}
+        onSendWhatsApp={(app) => {
+          setProfileClientName(null);
+          setWhatsAppApp(app);
+        }}
       />
     </div>
   );

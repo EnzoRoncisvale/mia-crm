@@ -1,19 +1,23 @@
 "use client";
 
 import React from "react";
-import { Calendar, ChevronRight, Clock, CheckCircle } from "lucide-react";
+import { Calendar, ChevronRight, MessageCircle, User } from "lucide-react";
 import { Appointment } from "@/types/crm";
 
 interface TodayAgendaProps {
   appointments: Appointment[];
   onViewAll: () => void;
   onSelectAppointment: (app: Appointment) => void;
+  onWhatsApp?: (app: Appointment) => void;
+  onViewProfile?: (clientName: string) => void;
 }
 
 export default function TodayAgenda({
   appointments,
   onViewAll,
   onSelectAppointment,
+  onWhatsApp,
+  onViewProfile,
 }: TodayAgendaProps) {
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
@@ -36,6 +40,12 @@ export default function TodayAgenda({
             Concluído
           </span>
         );
+      case "cancelado":
+        return (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">
+            Cancelado
+          </span>
+        );
       default:
         return (
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
@@ -56,7 +66,7 @@ export default function TodayAgenda({
           <div>
             <h2 className="text-sm font-bold text-zinc-900">Agenda de hoje</h2>
             <p className="text-[11px] text-zinc-400">
-              5 compromissos programados
+              {appointments.length} compromisso{appointments.length !== 1 ? "s" : ""} programado{appointments.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -78,38 +88,72 @@ export default function TodayAgenda({
         {appointments.map((app) => (
           <div
             key={app.id}
-            onClick={() => onSelectAppointment(app)}
-            className="group p-3 rounded-xl border border-zinc-100 bg-zinc-50/60 hover:bg-[#FFF8E7]/40 hover:border-[#FFC107]/40 transition-all cursor-pointer flex items-center justify-between gap-3"
+            className="group p-3 rounded-xl border border-zinc-100 bg-zinc-50/60 hover:bg-[#FFF8E7]/40 hover:border-[#FFC107]/40 transition-all"
           >
-            {/* Left: Time pill */}
-            <div className="text-center min-w-[58px] py-1 px-1.5 bg-white rounded-lg border border-zinc-200 text-zinc-700 shadow-2xs group-hover:border-[#FFC107]">
-              <div className="text-xs font-bold text-zinc-900">{app.time}</div>
-              <div className="text-[10px] text-zinc-400 font-medium">
-                {app.endTime}
-              </div>
-            </div>
-
-            {/* Middle: Client avatar + info */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-zinc-200/80 text-zinc-700 font-bold text-xs flex items-center justify-center shrink-0 border border-zinc-300/50 group-hover:bg-[#FFC107] group-hover:text-black transition-colors">
-                {app.clientInitials}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-zinc-900 truncate">
-                  {app.clientName}
-                </div>
-                <div className="text-[11px] text-zinc-500 truncate flex items-center gap-1">
-                  <span>{app.service}</span>
-                  <span className="text-zinc-300">•</span>
-                  <span className="font-semibold text-zinc-700">
-                    R$ {app.price.toFixed(2).replace(".", ",")}
-                  </span>
+            <div
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => onSelectAppointment(app)}
+            >
+              {/* Left: Time pill */}
+              <div className="text-center min-w-[58px] py-1 px-1.5 bg-white rounded-lg border border-zinc-200 text-zinc-700 shadow-2xs group-hover:border-[#FFC107]">
+                <div className="text-xs font-bold text-zinc-900">{app.time}</div>
+                <div className="text-[10px] text-zinc-400 font-medium">
+                  {app.endTime}
                 </div>
               </div>
+
+              {/* Middle: Client avatar + info */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-zinc-200/80 text-zinc-700 font-bold text-xs flex items-center justify-center shrink-0 border border-zinc-300/50 group-hover:bg-[#FFC107] group-hover:text-black transition-colors">
+                  {app.clientInitials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-zinc-900 truncate">
+                    {app.clientName}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 truncate flex items-center gap-1">
+                    <span>{app.service}</span>
+                    <span className="text-zinc-300">•</span>
+                    <span className="font-semibold text-zinc-700">
+                      R$ {app.price.toFixed(2).replace(".", ",")}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Status badge */}
+              <div className="shrink-0">{getStatusBadge(app.status)}</div>
             </div>
 
-            {/* Right: Status badge */}
-            <div className="shrink-0">{getStatusBadge(app.status)}</div>
+            {/* Action buttons — aparecem no hover */}
+            {(onWhatsApp || onViewProfile) && (
+              <div className="mt-2.5 pt-2.5 border-t border-zinc-100 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {onViewProfile && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewProfile(app.clientName);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-semibold text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+                  >
+                    <User size={12} />
+                    Ver Perfil
+                  </button>
+                )}
+                {onWhatsApp && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onWhatsApp(app);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                  >
+                    <MessageCircle size={12} />
+                    WhatsApp
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
