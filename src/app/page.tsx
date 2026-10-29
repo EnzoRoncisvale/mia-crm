@@ -15,11 +15,10 @@ import ServicesModule from "@/components/ServicesModule";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
+import WhatsAppContactButton from "@/components/WhatsAppContactButton";
 import {
-  INITIAL_APPOINTMENTS,
-  INITIAL_LEADS,
-  INITIAL_TASKS,
   NICHES,
+  INITIAL_TASKS,
 } from "@/data/mockData";
 import { Appointment, Lead, NicheConfig, TaskItem, UserRole } from "@/types/crm";
 import {
@@ -51,10 +50,11 @@ export default function Home() {
     "agendamento" | "lead" | "cliente" | "tarefa" | null
   >(null);
 
-  // App data states (backed by persistent SQLite API)
-  const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  // App data states — começa vazio, carrega da API ou localStorage
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   // WhatsApp Templates modal
   const [whatsAppApp, setWhatsAppApp] = useState<Appointment | null>(null);
@@ -73,25 +73,51 @@ export default function Home() {
         const appJson = await appRes.json();
         const leadJson = await leadRes.json();
 
-        if (appJson.success && appJson.data?.length > 0) {
+        // Se veio da API (SQLite local), usa direto
+        if (appJson.success && Array.isArray(appJson.data) && !appJson.demo) {
           setAppointments(appJson.data);
+          localStorage.setItem("mia_appointments", JSON.stringify(appJson.data));
+        } else {
+          // Vercel: carrega do localStorage (dados que o usuário já cadastrou)
+          const stored = localStorage.getItem("mia_appointments");
+          if (stored) setAppointments(JSON.parse(stored));
         }
-        if (leadJson.success && leadJson.data?.length > 0) {
+
+        if (leadJson.success && Array.isArray(leadJson.data) && !leadJson.demo) {
           setLeads(leadJson.data);
+          localStorage.setItem("mia_leads", JSON.stringify(leadJson.data));
+        } else {
+          const stored = localStorage.getItem("mia_leads");
+          if (stored) setLeads(JSON.parse(stored));
         }
       } catch (err) {
-        console.warn("Usando dados iniciais locais:", err);
+        // Fallback total para localStorage
+        const storedApps = localStorage.getItem("mia_appointments");
+        const storedLeads = localStorage.getItem("mia_leads");
+        if (storedApps) setAppointments(JSON.parse(storedApps));
+        if (storedLeads) setLeads(JSON.parse(storedLeads));
+        console.warn("Usando dados locais (localStorage):", err);
+      } finally {
+        setDataLoaded(true);
       }
     }
     loadData();
   }, []);
 
   const handleAddAppointment = (newApp: Appointment) => {
-    setAppointments((prev) => [newApp, ...prev]);
+    setAppointments((prev) => {
+      const updated = [newApp, ...prev];
+      localStorage.setItem("mia_appointments", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleAddLead = (newLead: Lead) => {
-    setLeads((prev) => [newLead, ...prev]);
+    setLeads((prev) => {
+      const updated = [newLead, ...prev];
+      localStorage.setItem("mia_leads", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -560,6 +586,8 @@ export default function Home() {
           setWhatsAppApp(app);
         }}
       />
+      {/* Botão flutuante WhatsApp */}
+      <WhatsAppContactButton />
     </div>
   );
 }
