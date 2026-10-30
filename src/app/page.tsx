@@ -13,6 +13,7 @@ import FinancialModule from "@/components/FinancialModule";
 import ProcessesModule from "@/components/ProcessesModule";
 import ServicesModule from "@/components/ServicesModule";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
+import LeadsKanbanModule from "@/components/LeadsKanbanModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
@@ -115,6 +116,14 @@ export default function Home() {
   const handleAddLead = (newLead: Lead) => {
     setLeads((prev) => {
       const updated = [newLead, ...prev];
+      localStorage.setItem("mia_leads", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleUpdateLeadStatus = (leadId: string, nextStatus: Lead["status"]) => {
+    setLeads((prev) => {
+      const updated = prev.map((l) => (l.id === leadId ? { ...l, status: nextStatus } : l));
       localStorage.setItem("mia_leads", JSON.stringify(updated));
       return updated;
     });
@@ -380,51 +389,27 @@ export default function Home() {
             </div>
           )}
 
-          {/* Module: Leads */}
+          {/* Module: Leads (Pipeline Kanban & Oportunidades inspirado no icantbelievecrm) */}
           {activeModule === "leads" && (
-            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-                <div>
-                  <h2 className="text-base font-bold text-zinc-900">
-                    Funil de Oportunidades & Leads
-                  </h2>
-                  <p className="text-xs text-zinc-500">
-                    Acompanhamento de conversão e mensagens recebidas
-                  </p>
-                </div>
-                <button
-                  onClick={() => setNewItemType("lead")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-                >
-                  + Novo Lead
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {leads.map((lead) => (
-                  <div
-                    key={lead.id}
-                    className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 flex flex-col justify-between space-y-3"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-xs text-zinc-900">
-                          {lead.name}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF8E7] text-amber-800 font-semibold">
-                          {lead.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-600">"{lead.message}"</p>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-200/60 text-[11px] text-zinc-400">
-                      <span>Origem: {lead.channel}</span>
-                      <span>{lead.timeAgo}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <LeadsKanbanModule
+              leads={leads}
+              currentNiche={currentNiche}
+              onOpenNewLead={() => setNewItemType("lead")}
+              onUpdateLeadStatus={handleUpdateLeadStatus}
+              onWhatsAppLead={(lead) => {
+                const syntheticApp: Appointment = {
+                  id: `lead-app-${lead.id}`,
+                  clientName: lead.name,
+                  clientInitials: lead.name.substring(0, 2).toUpperCase(),
+                  service: `Interesse em ${currentNiche.serviceLabel}`,
+                  time: "10:00",
+                  endTime: "10:45",
+                  price: lead.value || 150,
+                  status: "agendado",
+                };
+                setWhatsAppApp(syntheticApp);
+              }}
+            />
           )}
 
           {/* Module: Agenda */}

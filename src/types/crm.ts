@@ -41,8 +41,12 @@ export interface Lead {
   name: string;
   message: string;
   channel: "whatsapp" | "instagram";
-  status: "novo" | "em_negociacao" | "contato_feito" | "convertido";
+  status: "novo" | "contato_feito" | "em_negociacao" | "proposta" | "convertido" | "perdido";
   timeAgo: string;
+  value?: number;
+  phone?: string;
+  email?: string;
+  notes?: string;
 }
 
 export interface TaskItem {
