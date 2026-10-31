@@ -46,6 +46,8 @@ export default function NewItemModal({
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
   const [service, setService] = useState("");
+  const [date, setDate] = useState("");
+  const [dayOptions, setDayOptions] = useState<{ value: string; label: string }[]>([]);
   const [time, setTime] = useState("09:00");
   const [price, setPrice] = useState("120");
   const [channel, setChannel] = useState<"whatsapp" | "instagram">("whatsapp");
@@ -61,6 +63,30 @@ export default function NewItemModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
+
+  // Gera dias do agendamento no client-side para evitar descompasso de SSR
+  useEffect(() => {
+    const days: { value: string; label: string }[] = [];
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const isoDate = d.toISOString().slice(0, 10);
+      let prefix = "";
+      if (i === 0) prefix = "Hoje · ";
+      else if (i === 1) prefix = "Amanhã · ";
+      else {
+        const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        prefix = `${weekdays[d.getDay()]}, `;
+      }
+      const formatted = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+      days.push({ value: isoDate, label: `${prefix}${formatted}` });
+    }
+    setDayOptions(days);
+    if (days.length > 0 && !date) {
+      setDate(days[0].value);
+    }
+  }, [isOpen]);
 
   // Carrega serviços da API quando abre modal de agendamento
   useEffect(() => {
@@ -91,7 +117,7 @@ export default function NewItemModal({
   useEffect(() => {
     if (!isOpen) {
       setName(""); setEmail(""); setPhone(""); setDocument("");
-      setService(""); setTime("09:00"); setPrice("120");
+      setService(""); setDate(new Date().toISOString().slice(0, 10)); setTime("09:00"); setPrice("120");
       setMessage(""); setNicheField1(""); setNicheField2("");
       setConflictWarning(null);
     }
@@ -120,6 +146,7 @@ export default function NewItemModal({
           clientName: name || "Novo Cliente",
           clientInitials: initials,
           service: service || `${currentNiche.serviceLabel} Padrão`,
+          date: date,
           time: time,
           endTime: `${parseInt(time.split(":")[0]) || 16}:45`,
           price: parseFloat(price) || 100,
@@ -133,6 +160,7 @@ export default function NewItemModal({
             clientName: newApp.clientName,
             clientInitials: newApp.clientInitials,
             service: newApp.service,
+            date: newApp.date,
             time: newApp.time,
             endTime: newApp.endTime,
             price: newApp.price,
@@ -396,9 +424,31 @@ export default function NewItemModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Grid: Dia do Agendamento + Horário + Valor */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Dropdown de Dia */}
+                <div className="sm:col-span-1">
+                  <label className="block font-semibold text-zinc-700 mb-1">
+                    Data do Agendamento
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full px-3 py-2 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white appearance-none text-xs"
+                    >
+                      {dayOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                  </div>
+                </div>
+
                 {/* Dropdown de Horário */}
-                <div>
+                <div className="sm:col-span-1">
                   <label className="block font-semibold text-zinc-700 mb-1">
                     Horário de Início
                   </label>
@@ -406,7 +456,7 @@ export default function NewItemModal({
                     <select
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="w-full px-3 py-2 pr-9 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white appearance-none text-xs"
+                      className="w-full px-3 py-2 pr-8 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107] focus:bg-white appearance-none text-xs"
                     >
                       {TIME_SLOTS.map((slot) => (
                         <option key={slot} value={slot}>
@@ -414,11 +464,12 @@ export default function NewItemModal({
                         </option>
                       ))}
                     </select>
-                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                   </div>
                 </div>
-                {/* Valor (auto-preenchido pelo serviço, editável) */}
-                <div>
+
+                {/* Valor */}
+                <div className="sm:col-span-1">
                   <label className="block font-semibold text-zinc-700 mb-1">
                     Valor (R$)
                   </label>
