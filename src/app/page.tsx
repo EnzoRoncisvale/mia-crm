@@ -16,6 +16,7 @@ import WeeklyCalendar from "@/components/WeeklyCalendar";
 import LeadsKanbanModule from "@/components/LeadsKanbanModule";
 import CommunicationsInboxModule from "@/components/CommunicationsInboxModule";
 import TeamRBACModule from "@/components/TeamRBACModule";
+import SettingsModule from "@/components/SettingsModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
@@ -508,6 +509,13 @@ export default function Home() {
             />
           )}
 
+          {/* Module: Central de Configurações & Whitelabel */}
+          {activeModule === "configuracoes" && (
+            <SettingsModule
+              currentNiche={currentNiche}
+            />
+          )}
+
           {/* Module: Outros Módulos */}
           {![
             "dashboard",
@@ -520,6 +528,7 @@ export default function Home() {
             "servicos",
             "comunicacoes",
             "equipe",
+            "configuracoes",
           ].includes(activeModule) && (
             <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#FFF8E7] text-[#FFC107] flex items-center justify-center mx-auto text-2xl font-bold">

@@ -1,18 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
-import { MessageCircle, X, Phone } from "lucide-react";
-
-// ⚠️ Substitua pelo número real (55 + DDD + número, sem espaços)
-const WHATSAPP_NUMBER = "5511999999999";
-const WHATSAPP_MESSAGE = "Olá! Gostaria de saber mais sobre o MIA CRM 👋";
+import React, { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
 
 export default function WhatsAppContactButton() {
   const [hovered, setHovered] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("5511999999999");
+  const [whatsappMessage, setWhatsappMessage] = useState("Olá! Gostaria de saber mais sobre os serviços 👋");
+
+  useEffect(() => {
+    // Sincroniza dinamicamente com as configurações salvas na Central de Configurações
+    const updateFromSettings = () => {
+      const saved = localStorage.getItem("mia_company_settings");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.whatsappFloatingNumber) setWhatsappNumber(parsed.whatsappFloatingNumber);
+          if (parsed.whatsappDefaultMessage) setWhatsappMessage(parsed.whatsappDefaultMessage);
+        } catch {}
+      }
+    };
+
+    updateFromSettings();
+    window.addEventListener("storage", updateFromSettings);
+    return () => window.removeEventListener("storage", updateFromSettings);
+  }, []);
 
   const handleClick = () => {
-    const msg = encodeURIComponent(WHATSAPP_MESSAGE);
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+    const msg = encodeURIComponent(whatsappMessage);
+    window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, "_blank");
   };
 
   return (
@@ -24,12 +40,12 @@ export default function WhatsAppContactButton() {
         </div>
       )}
 
-      {/* Botão */}
+      {/* Botão Flutuante */}
       <button
         onClick={handleClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer"
         aria-label="Contato via WhatsApp"
       >
         <MessageCircle size={26} fill="white" />
