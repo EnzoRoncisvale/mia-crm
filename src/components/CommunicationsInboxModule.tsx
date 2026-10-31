@@ -43,57 +43,7 @@ interface CommunicationsInboxModuleProps {
   onOpenNewAppointment?: () => void;
 }
 
-const INITIAL_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv-1",
-    contactName: "Camila Barbosa",
-    avatarText: "CB",
-    phone: "(11) 97654-3210",
-    channel: "whatsapp",
-    lastMessage: "Perfeito! Posso confirmar o horário de quinta-feira?",
-    lastTime: "14:32",
-    unreadCount: 1,
-    status: "aberta",
-    tag: "Agendamento",
-    messages: [
-      { id: "m1", sender: "client", text: "Olá! Gostaria de saber os horários disponíveis desta semana.", time: "14:15" },
-      { id: "m2", sender: "agent", text: "Olá, Camila! Tudo bem? Temos quinta-feira às 11:00 ou sexta às 15:30. Algum desses te atende?", time: "14:20" },
-      { id: "m3", sender: "client", text: "Perfeito! Posso confirmar o horário de quinta-feira?", time: "14:32" },
-    ],
-  },
-  {
-    id: "conv-2",
-    contactName: "Beatriz Oliveira",
-    avatarText: "BO",
-    phone: "(11) 98765-4321",
-    channel: "whatsapp",
-    lastMessage: "Qual a forma de pagamento que vocês aceitam?",
-    lastTime: "11:05",
-    unreadCount: 0,
-    status: "aguardando",
-    tag: "Dúvida Pagamento",
-    messages: [
-      { id: "m4", sender: "client", text: "Oi! Qual a forma de pagamento que vocês aceitam?", time: "11:05" },
-      { id: "m5", sender: "agent", text: "Olá Beatriz! Aceitamos PIX com 5% de desconto, cartão de crédito em até 3x e débito.", time: "11:07" },
-    ],
-  },
-  {
-    id: "conv-3",
-    contactName: "Juliana Santos",
-    avatarText: "JS",
-    phone: "(11) 99876-5432",
-    channel: "instagram",
-    lastMessage: "Adorei o resultado da última sessão! Muito obrigada 💛",
-    lastTime: "Ontem",
-    unreadCount: 0,
-    status: "resolvida",
-    tag: "Pós-Atendimento",
-    messages: [
-      { id: "m6", sender: "agent", text: "Oi Juliana! Passando para saber como ficou o resultado da sua sessão de ontem!", time: "Ontem 16:00" },
-      { id: "m7", sender: "client", text: "Adorei o resultado da última sessão! Muito obrigada 💛", time: "Ontem 17:45" },
-    ],
-  },
-];
+const INITIAL_CONVERSATIONS: Conversation[] = [];
 
 export default function CommunicationsInboxModule({
   currentNiche,
@@ -272,124 +222,144 @@ export default function CommunicationsInboxModule({
 
         {/* Coluna Direita: Janela de Chat Ativa (8 colunas) */}
         <div className="lg:col-span-8 bg-white rounded-3xl border border-zinc-200/80 shadow-xs flex flex-col overflow-hidden">
-          {/* Header da Conversa */}
-          <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#111111] text-[#FFC107] font-extrabold text-xs flex items-center justify-center">
-                {selectedConv.avatarText}
+          {!selectedConv ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400">
+              <div className="w-16 h-16 rounded-3xl bg-zinc-100 flex items-center justify-center mb-3">
+                <MessageCircle size={28} className="text-zinc-400" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-xs text-zinc-900">{selectedConv.contactName}</h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-                    {selectedConv.phone}
-                  </span>
-                </div>
-                <span className="text-[10px] text-zinc-400">Canal oficial: WhatsApp</span>
-              </div>
+              <h3 className="font-bold text-sm text-zinc-700">Nenhuma conversa selecionada</h3>
+              <p className="text-xs text-zinc-400 max-w-xs mt-1">
+                Selecione uma conversa na lista ao lado ou inicie um novo atendimento com seus clientes.
+              </p>
             </div>
-
-            <div className="flex items-center gap-2">
-              {onOpenNewAppointment && (
-                <button
-                  onClick={onOpenNewAppointment}
-                  className="px-3 py-1.5 bg-[#FFC107] text-black text-xs font-bold rounded-xl hover:bg-[#E5AC06] transition-colors"
-                >
-                  + Agendar Horário
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Área das Mensagens (Scrollable) */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#FBFBFA]">
-            {selectedConv.messages.map((m) => {
-              const isAgent = m.sender === "agent";
-              return (
-                <div
-                  key={m.id}
-                  className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}
-                >
-                  <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-2xs ${
-                      isAgent
-                        ? "bg-[#111111] text-white rounded-tr-xs"
-                        : "bg-white text-zinc-900 border border-zinc-200 rounded-tl-xs"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
-                    <div
-                      className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${
-                        isAgent ? "text-zinc-400" : "text-zinc-400"
-                      }`}
-                    >
-                      <span>{m.time}</span>
-                      {isAgent && <CheckCheck size={11} className="text-[#FFC107]" />}
+          ) : (
+            <>
+              {/* Header da Conversa */}
+              <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#111111] text-[#FFC107] font-extrabold text-xs flex items-center justify-center">
+                    {selectedConv.avatarText}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-xs text-zinc-900">{selectedConv.contactName}</h3>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                        {selectedConv.phone}
+                      </span>
                     </div>
+                    <span className="text-[10px] text-zinc-400">Canal oficial: WhatsApp</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Atalhos Rápidos de Mensagem */}
-          <div className="px-4 py-2 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-2 overflow-x-auto text-[11px]">
-            <span className="text-zinc-400 font-bold shrink-0">⚡ Respostas Rápidas:</span>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickTemplate(
-                  `Olá, ${selectedConv.contactName.split(" ")[0]}! Nosso horário de atendimento é de segunda a sábado das 09h às 19h.`
-                )
-              }
-              className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
-            >
-              Horário de Funcionamento
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickTemplate(
-                  `Olá! Posso agendar sua consulta/sessão para esta semana? Qual seu melhor dia?`
-                )
-              }
-              className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
-            >
-              Oferecer Horário
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickTemplate(
-                  `Chave PIX da nossa empresa: contato@miacrm.com.br. Após transferir envie o comprovante!`
-                )
-              }
-              className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
-            >
-              Chave PIX
-            </button>
-          </div>
+                <div className="flex items-center gap-2">
+                  {onOpenNewAppointment && (
+                    <button
+                      onClick={onOpenNewAppointment}
+                      className="px-3 py-1.5 bg-[#FFC107] text-black text-xs font-bold rounded-xl hover:bg-[#E5AC06] transition-colors"
+                    >
+                      + Agendar Horário
+                    </button>
+                  )}
+                </div>
+              </div>
 
-          {/* Barra de Envio */}
-          <form
-            onSubmit={handleSendMessage}
-            className="p-3 border-t border-zinc-100 flex items-center gap-2 bg-white"
-          >
-            <input
-              type="text"
-              placeholder="Digite sua mensagem para o cliente..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black font-bold text-xs rounded-2xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-            >
-              <span>Enviar</span>
-              <Send size={13} />
-            </button>
-          </form>
+              {/* Área das Mensagens (Scrollable) */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#FBFBFA]">
+                {selectedConv.messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-zinc-400 text-xs">
+                    Inicie a conversa digitando uma mensagem abaixo.
+                  </div>
+                ) : (
+                  selectedConv.messages.map((m) => {
+                    const isAgent = m.sender === "agent";
+                    return (
+                      <div
+                        key={m.id}
+                        className={`flex flex-col ${isAgent ? "items-end" : "items-start"}`}
+                      >
+                        <div
+                          className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-2xs ${
+                            isAgent
+                              ? "bg-[#111111] text-white rounded-tr-xs"
+                              : "bg-white text-zinc-900 border border-zinc-200 rounded-tl-xs"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                          <div
+                            className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${
+                              isAgent ? "text-zinc-400" : "text-zinc-400"
+                            }`}
+                          >
+                            <span>{m.time}</span>
+                            {isAgent && <CheckCheck size={11} className="text-[#FFC107]" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Atalhos Rápidos de Mensagem */}
+              <div className="px-4 py-2 border-t border-zinc-100 bg-zinc-50/50 flex items-center gap-2 overflow-x-auto text-[11px]">
+                <span className="text-zinc-400 font-bold shrink-0">⚡ Respostas Rápidas:</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickTemplate(
+                      `Olá, ${selectedConv.contactName.split(" ")[0]}! Nosso horário de atendimento é de segunda a sábado das 09h às 19h.`
+                    )
+                  }
+                  className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
+                >
+                  Horário de Funcionamento
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickTemplate(
+                      `Olá! Posso agendar sua consulta/sessão para esta semana? Qual seu melhor dia?`
+                    )
+                  }
+                  className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
+                >
+                  Oferecer Horário
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickTemplate(
+                      `Chave PIX da nossa empresa: contato@miacrm.com.br. Após transferir envie o comprovante!`
+                    )
+                  }
+                  className="px-2.5 py-1 bg-white border border-zinc-200 rounded-lg text-zinc-700 hover:border-[#FFC107] shrink-0"
+                >
+                  Chave PIX
+                </button>
+              </div>
+
+              {/* Barra de Envio */}
+              <form
+                onSubmit={handleSendMessage}
+                className="p-3 border-t border-zinc-100 flex items-center gap-2 bg-white"
+              >
+                <input
+                  type="text"
+                  placeholder="Digite sua mensagem para o cliente..."
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  className="flex-1 px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black font-bold text-xs rounded-2xl flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                >
+                  <span>Enviar</span>
+                  <Send size={13} />
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
