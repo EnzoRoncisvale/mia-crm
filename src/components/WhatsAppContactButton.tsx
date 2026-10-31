@@ -32,7 +32,7 @@ export default function WhatsAppContactButton() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
+    <div className="fixed bottom-22 right-6 z-40 flex items-center gap-3">
       {/* Tooltip */}
       {hovered && (
         <div className="bg-white border border-zinc-200 shadow-lg rounded-2xl px-4 py-2.5 text-xs font-semibold text-zinc-800 animate-in fade-in slide-in-from-right-2 whitespace-nowrap">
