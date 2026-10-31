@@ -23,6 +23,7 @@ import DocumentsModule from "@/components/DocumentsModule";
 import WhatsAppConnectionsModule from "@/components/WhatsAppConnectionsModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
+import ClientsModule from "@/components/ClientsModule";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
 import {
   NICHES,
@@ -342,58 +343,13 @@ export default function Home() {
             <FinancialModule currentNiche={currentNiche} />
           )}
 
-          {/* Module: Clientes */}
+          {/* Module: Clientes com Importação/Exportação CSV e visualização avançada */}
           {activeModule === "clientes" && (
-            <div className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-                <div>
-                  <h2 className="text-base font-bold text-zinc-900">
-                    Base de {currentNiche.clientLabel}s
-                  </h2>
-                  <p className="text-xs text-zinc-500">
-                    Cadastro único com campos customizáveis para {currentNiche.name}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setNewItemType("cliente")}
-                  className="px-3.5 py-2 bg-[#FFC107] text-black font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-                >
-                  + Cadastrar {currentNiche.clientLabel}
-                </button>
-              </div>
-
-              <div className="divide-y divide-zinc-100">
-                {appointments.map((app) => (
-                  <div
-                    key={app.id}
-                    className="py-3 flex items-center justify-between hover:bg-zinc-50 px-2 rounded-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#111111] text-[#FFC107] font-bold text-xs flex items-center justify-center">
-                        {app.clientInitials}
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-zinc-900">
-                          {app.clientName}
-                        </div>
-                        <div className="text-[11px] text-zinc-400">
-                          Último procedimento: {app.service}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-zinc-900">
-                        R$ {app.price.toFixed(2).replace(".", ",")}
-                      </span>
-                      <div className="text-[10px] text-emerald-600 font-semibold">
-                        {app.status === "confirmado" ? "Ativo" : "Agendado"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ClientsModule
+              currentNiche={currentNiche}
+              onOpenNewClient={() => setNewItemType("cliente")}
+              onSelectClient={(name) => setProfileClientName(name)}
+            />
           )}
 
           {/* Module: Leads (Pipeline Kanban & Oportunidades inspirado no icantbelievecrm) */}
