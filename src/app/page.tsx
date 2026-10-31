@@ -24,6 +24,7 @@ import WhatsAppConnectionsModule from "@/components/WhatsAppConnectionsModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
 import ClientsModule from "@/components/ClientsModule";
+import CampaignsModule from "@/components/CampaignsModule";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
 import {
   NICHES,
@@ -497,6 +498,13 @@ export default function Home() {
             />
           )}
 
+          {/* Module: Campanhas & Disparos WhatsApp */}
+          {activeModule === "campanhas" && (
+            <CampaignsModule
+              currentNiche={currentNiche}
+            />
+          )}
+
           {/* Module: Conexões WhatsApp / Pareamento QR Code */}
           {activeModule === "conexoes" && (
             <WhatsAppConnectionsModule
@@ -520,6 +528,7 @@ export default function Home() {
             "relatorios",
             "propostas",
             "documentos",
+            "campanhas",
             "conexoes",
           ].includes(activeModule) && (
             <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">

@@ -19,6 +19,7 @@ import {
   Crown,
   Shield,
   Smartphone,
+  Megaphone,
 } from "lucide-react";
 import { NicheConfig, UserRole, USER_ROLES } from "@/types/crm";
 
@@ -44,6 +45,7 @@ export const MENU_ITEMS = [
   { id: "financeiro", label: "Financeiro & Caixa", icon: DollarSign },
   { id: "documentos", label: "Documentos & LGPD", icon: FileText },
   { id: "comunicacoes", label: "Comunicações", icon: MessageCircle },
+  { id: "campanhas", label: "Campanhas WhatsApp", icon: Megaphone, badge: "Reativação" },
   { id: "relatorios", label: "Relatórios", icon: BarChart3 },
   { id: "equipe", label: "Equipe (RBAC)", icon: UserCheck },
   { id: "conexoes", label: "Conexões WhatsApp", icon: Smartphone, badge: "QR" },
