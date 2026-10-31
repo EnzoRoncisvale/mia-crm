@@ -14,6 +14,8 @@ import ProcessesModule from "@/components/ProcessesModule";
 import ServicesModule from "@/components/ServicesModule";
 import WeeklyCalendar from "@/components/WeeklyCalendar";
 import LeadsKanbanModule from "@/components/LeadsKanbanModule";
+import CommunicationsInboxModule from "@/components/CommunicationsInboxModule";
+import TeamRBACModule from "@/components/TeamRBACModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
@@ -490,6 +492,22 @@ export default function Home() {
             </div>
           )}
 
+          {/* Module: Comunicações & Inbox WhatsApp */}
+          {activeModule === "comunicacoes" && (
+            <CommunicationsInboxModule
+              currentNiche={currentNiche}
+              onOpenNewAppointment={() => setNewItemType("agendamento")}
+            />
+          )}
+
+          {/* Module: Equipe & Níveis de Acesso RBAC */}
+          {activeModule === "equipe" && (
+            <TeamRBACModule
+              currentNiche={currentNiche}
+              currentRole={currentRole}
+            />
+          )}
+
           {/* Module: Outros Módulos */}
           {![
             "dashboard",
@@ -500,6 +518,8 @@ export default function Home() {
             "tarefas",
             "processos",
             "servicos",
+            "comunicacoes",
+            "equipe",
           ].includes(activeModule) && (
             <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#FFF8E7] text-[#FFC107] flex items-center justify-center mx-auto text-2xl font-bold">
