@@ -18,6 +18,7 @@ import {
   X,
   Crown,
   Shield,
+  Smartphone,
 } from "lucide-react";
 import { NicheConfig, UserRole, USER_ROLES } from "@/types/crm";
 
@@ -45,6 +46,7 @@ export const MENU_ITEMS = [
   { id: "comunicacoes", label: "Comunicações", icon: MessageCircle },
   { id: "relatorios", label: "Relatórios", icon: BarChart3 },
   { id: "equipe", label: "Equipe (RBAC)", icon: UserCheck },
+  { id: "conexoes", label: "Conexões WhatsApp", icon: Smartphone, badge: "QR" },
   { id: "configuracoes", label: "Configurações", icon: Settings },
 ];
 

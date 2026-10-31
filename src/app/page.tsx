@@ -20,6 +20,7 @@ import SettingsModule from "@/components/SettingsModule";
 import ReportsModule from "@/components/ReportsModule";
 import ProposalsModule from "@/components/ProposalsModule";
 import DocumentsModule from "@/components/DocumentsModule";
+import WhatsAppConnectionsModule from "@/components/WhatsAppConnectionsModule";
 import WhatsAppTemplates from "@/components/WhatsAppTemplates";
 import ClientProfile from "@/components/ClientProfile";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
@@ -540,6 +541,13 @@ export default function Home() {
             />
           )}
 
+          {/* Module: Conexões WhatsApp / Pareamento QR Code */}
+          {activeModule === "conexoes" && (
+            <WhatsAppConnectionsModule
+              currentNiche={currentNiche}
+            />
+          )}
+
           {/* Module: Outros Módulos */}
           {![
             "dashboard",
@@ -556,6 +564,7 @@ export default function Home() {
             "relatorios",
             "propostas",
             "documentos",
+            "conexoes",
           ].includes(activeModule) && (
             <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 shadow-xs text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#FFF8E7] text-[#FFC107] flex items-center justify-center mx-auto text-2xl font-bold">
