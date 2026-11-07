@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   ShieldCheck,
@@ -12,6 +12,7 @@ import {
   UserCheck,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { NicheConfig, UserRole, USER_ROLES } from "@/types/crm";
 
@@ -69,8 +70,10 @@ interface TeamRBACModuleProps {
   currentRole: UserRole;
 }
 
+const STORAGE_KEY = "mia_crm_team_members";
+
 export default function TeamRBACModule({ currentNiche, currentRole }: TeamRBACModuleProps) {
-  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -79,6 +82,32 @@ export default function TeamRBACModule({ currentNiche, currentRole }: TeamRBACMo
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("atendente");
+
+  // Carrega membros com persistência no LocalStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTeam(parsed);
+            return;
+          }
+        } catch (e) {
+          console.error("Erro ao carregar equipe:", e);
+        }
+      }
+    }
+    setTeam(INITIAL_TEAM);
+  }, []);
+
+  const saveTeam = (updated: TeamMember[]) => {
+    setTeam(updated);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
+  };
 
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,11 +130,19 @@ export default function TeamRBACModule({ currentNiche, currentRole }: TeamRBACMo
       avatarInitials: initials || "MB",
     };
 
-    setTeam((prev) => [created, ...prev]);
+    const updated = [created, ...team];
+    saveTeam(updated);
     setIsModalOpen(false);
     setNewName("");
     setNewEmail("");
     setNewPhone("");
+  };
+
+  const handleDeleteMember = (id: string, name: string) => {
+    if (confirm(`Tem certeza que deseja remover ${name} da equipe?`)) {
+      const updated = team.filter((m) => m.id !== id);
+      saveTeam(updated);
+    }
   };
 
   const filteredTeam = team.filter(
@@ -192,9 +229,18 @@ export default function TeamRBACModule({ currentNiche, currentRole }: TeamRBACMo
                   <span className="flex items-center gap-1">
                     <Phone size={11} /> {member.phone}
                   </span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                    <CheckCircle2 size={12} /> Ativo no Sistema
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                      <CheckCircle2 size={12} /> Ativo
+                    </span>
+                    <button
+                      onClick={() => handleDeleteMember(member.id, member.name)}
+                      title="Remover colaborador"
+                      className="p-1 text-zinc-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
