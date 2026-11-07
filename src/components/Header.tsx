@@ -121,7 +121,7 @@ export default function Header({
           {showNicheDropdown && (
             <div className="absolute right-0 mt-2 w-64 bg-white border border-zinc-200 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 max-h-96 overflow-y-auto">
               <div className="px-3 py-1.5 border-b border-zinc-100 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                15 Nichos de Atuação do MIA
+                3 Nichos de Atuação do MIA
               </div>
               {NICHES.map((niche) => (
                 <button

@@ -1,5 +1,6 @@
-import { Appointment, Lead, NicheConfig, PlanTier, TaskItem } from "@/types/crm";
+import { Appointment, Lead, NicheConfig, TaskItem } from "@/types/crm";
 
+// Os 3 Nichos Oficiais do Projeto: Beleza & Estética, Saúde & Bem-estar e Contabilidade
 export const NICHES: NicheConfig[] = [
   {
     id: "beleza_estetica",
@@ -7,7 +8,7 @@ export const NICHES: NicheConfig[] = [
     clientLabel: "Cliente",
     serviceLabel: "Procedimento",
     iconName: "Sparkles",
-    description: "Salões de beleza, clínicas de estética, lash designers e manicures",
+    description: "Salões de beleza, clínicas de estética facial/corporal, lash designers e manicures",
   },
   {
     id: "saude_bem_estar",
@@ -15,7 +16,7 @@ export const NICHES: NicheConfig[] = [
     clientLabel: "Paciente",
     serviceLabel: "Consulta / Sessão",
     iconName: "HeartPulse",
-    description: "Nutricionistas, fisioterapeutas, psicólogos e terapeutas",
+    description: "Nutricionistas, fisioterapeutas, biomédicos, psicólogos e terapeutas integrativos",
   },
   {
     id: "contabilidade",
@@ -23,108 +24,11 @@ export const NICHES: NicheConfig[] = [
     clientLabel: "Cliente PJ/PF",
     serviceLabel: "Competência / Serviço",
     iconName: "Calculator",
-    description: "Escritórios de contabilidade e consultores fiscais",
-  },
-  {
-    id: "servicos_juridicos",
-    name: "Serviços Jurídicos",
-    clientLabel: "Cliente / Requerente",
-    serviceLabel: "Audiência / Processo",
-    iconName: "Scale",
-    description: "Advogados, escritórios de advocacia e assessoria jurídica",
-  },
-  {
-    id: "imoveis_construcao",
-    name: "Imóveis e Construção",
-    clientLabel: "Comprador / Locatário",
-    serviceLabel: "Visita / Vistoria",
-    iconName: "Building2",
-    description: "Corretores, imobiliárias, engenheiros e arquitetos",
-  },
-  {
-    id: "marketing_digital",
-    name: "Marketing Digital",
-    clientLabel: "Conta / Cliente",
-    serviceLabel: "Campanha / Projeto",
-    iconName: "TrendingUp",
-    description: "Agências, gestores de tráfego, social media e designers",
-  },
-  {
-    id: "mercado_pet",
-    name: "Mercado Pet",
-    clientLabel: "Tutor / Pet",
-    serviceLabel: "Banho & Tosa / Consulta",
-    iconName: "Dog",
-    description: "Pet shops, clínicas veterinárias e adestradores",
-  },
-  {
-    id: "educacao_cursos",
-    name: "Educação e Cursos",
-    clientLabel: "Aluno",
-    serviceLabel: "Aula / Módulo",
-    iconName: "GraduationCap",
-    description: "Professores particulares, escolas e cursos livres",
-  },
-  {
-    id: "automoveis",
-    name: "Automóveis",
-    clientLabel: "Proprietário",
-    serviceLabel: "Manutenção / Estética",
-    iconName: "Car",
-    description: "Oficinas mecânicas, centros automotivos e detailers",
-  },
-  {
-    id: "eventos",
-    name: "Eventos",
-    clientLabel: "Contratante",
-    serviceLabel: "Cerimônia / Produção",
-    iconName: "PartyPopper",
-    description: "Cerimonialistas, fotógrafos, buffets e decoradores",
-  },
-  {
-    id: "alimentacao",
-    name: "Alimentação",
-    clientLabel: "Consumidor",
-    serviceLabel: "Pedido / Reserva",
-    iconName: "Utensils",
-    description: "Restaurantes, confeitarias artesanais e marmitarias",
-  },
-  {
-    id: "servicos_residenciais",
-    name: "Serviços Residenciais",
-    clientLabel: "Morador",
-    serviceLabel: "Visita Técnica",
-    iconName: "Home",
-    description: "Eletricistas, encanadores, pintores e diaristas",
-  },
-  {
-    id: "turismo_hospitalidade",
-    name: "Turismo e Hospitalidade",
-    clientLabel: "Hóspede / Viajante",
-    serviceLabel: "Estadia / Roteiro",
-    iconName: "Plane",
-    description: "Pousadas, guias turísticos e agências de viagens",
-  },
-  {
-    id: "comercio_vendas",
-    name: "Comércio e Vendas",
-    clientLabel: "Cliente",
-    serviceLabel: "Venda / Orçamento",
-    iconName: "ShoppingBag",
-    description: "Lojas físicas, e-commerce local e distribuidores",
-  },
-  {
-    id: "consultoria",
-    name: "Consultoria",
-    clientLabel: "Assessorado",
-    serviceLabel: "Mentoria / Diagnóstico",
-    iconName: "Briefcase",
-    description: "Consultores de negócios, RH e finanças",
+    description: "Escritórios contábeis, BPO financeiro, abertura de empresas e consultoria fiscal",
   },
 ];
 
 export const INITIAL_APPOINTMENTS: Appointment[] = [];
-
 export const INITIAL_LEADS: Lead[] = [];
 
 export const INITIAL_TASKS: TaskItem[] = [
@@ -137,7 +41,7 @@ export const INITIAL_TASKS: TaskItem[] = [
   },
   {
     id: "task-2",
-    title: "Repor estoque de insumos e géis",
+    title: "Checar estoque de insumos e procedimentos",
     dueDate: "Amanhã",
     completed: false,
     priority: "media",
@@ -145,74 +49,8 @@ export const INITIAL_TASKS: TaskItem[] = [
   {
     id: "task-3",
     title: "Enviar relatório mensal de faturamento para contabilidade",
-    dueDate: "Em 3 dias",
-    completed: true,
+    dueDate: "Sexta",
+    completed: false,
     priority: "baixa",
-  },
-];
-
-export const PLAN_TIERS: PlanTier[] = [
-  {
-    id: "essencial",
-    name: "MIA ESSENCIAL",
-    price: 59.9,
-    period: "/mês",
-    tagline: "Para começar com mais organização. Ideal para autônomos.",
-    usersLimit: 1,
-    contactsLimit: 300,
-    aiCreditsLimit: 30,
-    features: [
-      "1 usuário da equipe",
-      "Até 300 contatos ativos",
-      "30 créditos de IA por mês",
-      "Cadastro e acompanhamento de clientes",
-      "Agenda e lembretes",
-      "Tarefas e checklists básicos",
-      "Relatórios básicos",
-      "Suporte por e-mail",
-    ],
-  },
-  {
-    id: "profissional",
-    name: "MIA PROFISSIONAL",
-    price: 129.9,
-    period: "/mês",
-    tagline: "Mais automação para o seu crescimento. Nosso plano mais escolhido.",
-    isPopular: true,
-    usersLimit: 3,
-    contactsLimit: 1500,
-    aiCreditsLimit: 150,
-    features: [
-      "Até 3 usuários da equipe",
-      "Até 1.500 contatos ativos",
-      "150 créditos de IA por mês",
-      "Tudo do plano Essencial",
-      "Automações básicas configuráveis",
-      "Acompanhamento de leads e follow-ups",
-      "Relatórios de conversão e faturamento",
-      "Modelos de tarefas e checklists",
-      "Suporte prioritário via WhatsApp",
-    ],
-  },
-  {
-    id: "business",
-    name: "MIA BUSINESS",
-    price: 249.9,
-    period: "/mês",
-    tagline: "Mais recursos para grandes resultados e operações que desejam escalar.",
-    usersLimit: 5,
-    contactsLimit: 5000,
-    aiCreditsLimit: 400,
-    features: [
-      "Até 5 usuários da equipe",
-      "Até 5.000 contatos ativos",
-      "400 créditos de IA por mês",
-      "Tudo do plano Profissional",
-      "Automações avançadas ilimitadas",
-      "Processos e checklists específicos por nicho",
-      "Relatórios completos e personalizados",
-      "Configurações e integrações avançadas",
-      "Suporte prioritário e acompanhamento dedicado",
-    ],
   },
 ];

@@ -171,26 +171,16 @@ export default function Sidebar({
           })}
         </nav>
 
-        {/* Upgrade Plan Card / CTA */}
+        {/* Perfil da Tayná (Administradora) */}
         <div className="p-3 border-t border-white/10 bg-gradient-to-b from-[#1a1a1a] to-[#111111]">
-          <div className="p-3 rounded-xl bg-white/5 border border-[#FFC107]/30 text-left">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-[#FFC107] flex items-center gap-1">
-                <Crown size={14} /> Plano Profissional
-              </span>
-              <span className="text-[10px] text-zinc-400 bg-black/40 px-1.5 py-0.5 rounded">
-                Ativo
-              </span>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-left flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#FFC107] text-black font-extrabold text-xs flex items-center justify-center shrink-0">
+              TA
             </div>
-            <p className="text-[11px] text-zinc-300 mb-2.5">
-              Multi-tenant, 15 nichos e assistente IA integrados.
-            </p>
-            <button
-              onClick={onOpenPlans}
-              className="w-full py-1.5 bg-[#FFC107] hover:bg-[#E5AC06] text-black font-bold text-xs rounded-lg transition-colors text-center"
-            >
-              Ver Planos & Cotas
-            </button>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-white truncate">Tayná (Empresária)</div>
+              <div className="text-[10px] text-zinc-400">Admin Geral da Operação</div>
+            </div>
           </div>
         </div>
       </aside>

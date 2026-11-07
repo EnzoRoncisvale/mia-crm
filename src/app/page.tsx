@@ -7,7 +7,6 @@ import DashboardKpis from "@/components/DashboardKpis";
 import TodayAgenda from "@/components/TodayAgenda";
 import RecentLeads from "@/components/RecentLeads";
 import MiaAssistantWidget from "@/components/MiaAssistantWidget";
-import PlansModal from "@/components/PlansModal";
 import NewItemModal from "@/components/NewItemModal";
 import FinancialModule from "@/components/FinancialModule";
 import ProcessesModule from "@/components/ProcessesModule";
@@ -26,6 +25,8 @@ import ClientProfile from "@/components/ClientProfile";
 import ClientsModule from "@/components/ClientsModule";
 import CampaignsModule from "@/components/CampaignsModule";
 import WhatsAppContactButton from "@/components/WhatsAppContactButton";
+import FooterCorporate from "@/components/FooterCorporate";
+import ClientPortal from "@/components/ClientPortal";
 import {
   NICHES,
   INITIAL_TASKS,
@@ -54,7 +55,7 @@ export default function Home() {
   const [currentNiche, setCurrentNiche] = useState<NicheConfig>(NICHES[0]); // Beleza e Estética
   const [currentRole, setCurrentRole] = useState<UserRole>("admin_empresa"); // RBAC (Seção 2.2)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"admin" | "cliente">("admin");
   const [isMiaAssistantOpen, setIsMiaAssistantOpen] = useState(false);
   const [newItemType, setNewItemType] = useState<
     "agendamento" | "lead" | "cliente" | "tarefa" | null
@@ -144,6 +145,18 @@ export default function Home() {
     );
   };
 
+  if (viewMode === "cliente") {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex flex-col">
+        <ClientPortal
+          onBackToAdmin={() => setViewMode("admin")}
+          onBookAppointment={(app) => handleAddAppointment(app)}
+        />
+        <FooterCorporate />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#111111] flex flex-col font-sans">
       {/* Sidebar Desktop & Mobile */}
@@ -153,7 +166,7 @@ export default function Home() {
         isOpenMobile={isMobileSidebarOpen}
         setIsOpenMobile={setIsMobileSidebarOpen}
         currentNiche={currentNiche}
-        onOpenPlans={() => setIsPlansModalOpen(true)}
+        onOpenPlans={() => {}}
         currentRole={currentRole}
       />
 
@@ -188,6 +201,14 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                onClick={() => setViewMode("cliente")}
+                className="px-4 py-2.5 bg-[#FFF8E7] hover:bg-[#FFC107]/30 text-zinc-900 border border-[#FFC107]/60 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                title="Visualizar a página pública que seus clientes acessam"
+              >
+                <span>🌐 Ver Portal do Cliente</span>
+              </button>
+
               <button
                 onClick={() => setActiveModule("processos")}
                 className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
@@ -550,6 +571,9 @@ export default function Home() {
             </div>
           )}
         </main>
+
+        {/* Rodapé Corporativo com CNPJs */}
+        <FooterCorporate />
       </div>
 
       {/* Floating Mia Assistant */}
@@ -564,12 +588,6 @@ export default function Home() {
           if (actionType === "processos") setActiveModule("processos");
         }}
         currentRole={currentRole}
-      />
-
-      {/* Modal: Planos & Preços */}
-      <PlansModal
-        isOpen={isPlansModalOpen}
-        onClose={() => setIsPlansModalOpen(false)}
       />
 
       {/* Modal: Novo Item */}
