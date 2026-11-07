@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles, HeartPulse, Calculator, Calendar, Clock, CheckCircle2,
-  Phone, ArrowRight, ShieldCheck, MapPin, Award, Star, MessageSquare
+  Phone, ArrowRight, ShieldCheck, MapPin, Award, Star, MessageSquare,
+  User, Check, ChevronRight, AlertCircle, ArrowLeft, Info
 } from "lucide-react";
 import { Appointment } from "@/types/crm";
 
@@ -12,82 +13,261 @@ interface ClientPortalProps {
   onBookAppointment?: (app: Appointment) => void;
 }
 
-const PROCEDURES_BY_NICHE = {
-  estetica: [
-    { id: "e1", title: "Limpeza de Pele Profunda", duration: "60 min", price: 180, tag: "Mais Procurado", desc: "Higienização profunda com extração por sucção, vapor de ozônio e máscara calmante revitalizante." },
-    { id: "e2", title: "Harmonização & Peeling Químico", duration: "45 min", price: 320, tag: "Destaque", desc: "Renovação celular intensa para suavizar manchas, uniformizar o tom e estimular o colágeno." },
-    { id: "e3", title: "Drenagem Linfática Facial & Corporal", duration: "50 min", price: 150, tag: "Relax", desc: "Redução de inchaço, desintoxicação tecidual e melhora da circulação geral." },
-    { id: "e4", title: "Protocolo Glow & Hidratação de Diamante", duration: "40 min", price: 210, tag: "Express", desc: "Esfoliação com ponta de diamante para viço instantâneo e recuperação da elasticidade." },
-  ],
-  saude: [
-    { id: "s1", title: "Consulta Nutricional Integrativa", duration: "60 min", price: 250, tag: "Avaliação Completa", desc: "Bioimpedância completa, plano alimentar personalizado e análise metabólica detalhada." },
-    { id: "s2", title: "Sessão de Fisioterapia & Reabilitação", duration: "50 min", price: 180, tag: "Individualizada", desc: "Alívio de dores posturais, reabilitação musculoesquelética e exercícios funcionais guiados." },
-    { id: "s3", title: "Terapia & Saúde Emocional", duration: "50 min", price: 200, tag: "Online / Presencial", desc: "Acompanhamento focado em equilíbrio pessoal, ansiedade e qualidade de vida." },
-    { id: "s4", title: "Check-up Preventivo de Bem-Estar", duration: "45 min", price: 220, tag: "Preventivo", desc: "Mapeamento dos hábitos de sono, estresse e orientações de rotina saudável." },
-  ],
-  contabilidade: [
-    { id: "c1", title: "Diagnóstico Fiscal & Abertura de Empresa", duration: "45 min", price: 0, tag: "Cortesia", desc: "Enquadramento tributário ideal (Simples Nacional, Lucro Presumido), economia tributária e emissão de CNPJ." },
-    { id: "c2", title: "Assessoria Contábil Mensal para Clínicas", duration: "Contínuo", price: 490, tag: "Especializado", desc: "Gestão fiscal e contábil completa para médicos, biomédicos e profissionais da saúde/estética." },
-    { id: "c3", title: "Consultoria de BPO Financeiro & Fluxo de Caixa", duration: "60 min", price: 350, tag: "Gestão", desc: "Estruturação das contas a pagar, conciliação bancária e dashboards de faturamento." },
-  ]
-};
+interface ServiceItem {
+  id: string;
+  title: string;
+  category: "estetica" | "saude" | "contabilidade";
+  duration: string;
+  price: number;
+  tag: string;
+  rating: string;
+  reviewsCount: number;
+  desc: string;
+  benefits: string[];
+}
+
+const ALL_SERVICES: ServiceItem[] = [
+  // ESTÉTICA
+  {
+    id: "e1",
+    category: "estetica",
+    title: "Limpeza de Pele Profunda + Peeling Ultrassônico",
+    duration: "60 min",
+    price: 180,
+    tag: "Mais Procurado 🔥",
+    rating: "4.9",
+    reviewsCount: 128,
+    desc: "Higienização profunda dos poros com extração por sucção, vapor de ozônio, esfoliação ultrassônica e máscara calmante revitalizante.",
+    benefits: ["Remove cravos e impurezas", "Reduz oleosidade excessiva", "Pele iluminada e macia"]
+  },
+  {
+    id: "e2",
+    category: "estetica",
+    title: "Harmonização & Peeling de Diamante Glow",
+    duration: "45 min",
+    price: 320,
+    tag: "Resultado Imediato ✨",
+    rating: "5.0",
+    reviewsCount: 94,
+    desc: "Microdermoabrasão suave com aplicação de sérum tensor de ácido hialurônico para uniformização do tom e viço.",
+    benefits: ["Suaviza linhas de expressão", "Uniformiza o tom da pele", "Estimula síntese de colágeno"]
+  },
+  {
+    id: "e3",
+    category: "estetica",
+    title: "Drenagem Linfática Facial & Corporal Anti-Inchaço",
+    duration: "50 min",
+    price: 150,
+    tag: "Relax & Desintoxicação",
+    rating: "4.8",
+    reviewsCount: 76,
+    desc: "Manobras rítmicas suaves para acelerar a drenagem de toxinas, amenizar retenção hídrica e aliviar o cansaço.",
+    benefits: ["Alívio imediato do inchaço", "Melhora circulação periférica", "Sensação profunda de relaxamento"]
+  },
+  {
+    id: "e4",
+    category: "estetica",
+    title: "Design de Sobrancelhas + Lash Lifting",
+    duration: "45 min",
+    price: 130,
+    tag: "Olhar Marcante",
+    rating: "4.9",
+    reviewsCount: 110,
+    desc: "Mapeamento facial personalizado, alinhamento simétrico e curvatura natural dos cílios com hidratação de queratina.",
+    benefits: ["Destaque para o olhar", "Cílios curvados por até 6 semanas", "Não necessita rímel"]
+  },
+
+  // SAÚDE & BEM-ESTAR
+  {
+    id: "s1",
+    category: "saude",
+    title: "Consulta Nutricional Integrativa + Bioimpedância",
+    duration: "60 min",
+    price: 250,
+    tag: "Avaliação Completa 🥗",
+    rating: "5.0",
+    reviewsCount: 85,
+    desc: "Exame de composição corporal em aparelho tetrapolar, rastreamento metabólico e elaboração de cardápio prático sem restrições severas.",
+    benefits: ["Plano alimentar sob medida", "Análise de % de gordura e músculo", "Suporte via WhatsApp pós-consulta"]
+  },
+  {
+    id: "s2",
+    category: "saude",
+    title: "Sessão de Fisioterapia & Alívio de Dores na Coluna",
+    duration: "50 min",
+    price: 180,
+    tag: "Tratamento da Dor 🩺",
+    rating: "4.9",
+    reviewsCount: 62,
+    desc: "Diagnóstico biomecânico, liberação miofascial e terapia manual focada na causa raiz de dores lombares e cervicais.",
+    benefits: ["Alívio imediato da tensão muscular", "Correção postural ativa", "Exercícios para prevenção em casa"]
+  },
+  {
+    id: "s3",
+    category: "saude",
+    title: "Sessão de Terapia & Saúde Emocional",
+    duration: "50 min",
+    price: 200,
+    tag: "Acolhimento & Equilíbrio 🧠",
+    rating: "5.0",
+    reviewsCount: 53,
+    desc: "Espaço confidencial com psicóloga para manejo de estresse, ansiedade, autoconhecimento e equilíbrio de rotina.",
+    benefits: ["Atendimento presencial ou online", "Ambiente acolhedor e seguro", "Estratégias de clareza mental"]
+  },
+
+  // CONTABILIDADE
+  {
+    id: "c1",
+    category: "contabilidade",
+    title: "Diagnóstico Fiscal & Planejamento para PJ / Médicos",
+    duration: "45 min",
+    price: 0,
+    tag: "100% Gratuito / Cortesia 📊",
+    rating: "5.0",
+    reviewsCount: 42,
+    desc: "Análise minuciosa para redução legal de tributos (Fator R, Simples Nacional vs Lucro Presumido) para clínicas e prestadores.",
+    benefits: ["Descubra como pagar menos imposto legalmente", "Checkup de pendências de CNPJ", "Sem compromisso de contratação"]
+  },
+  {
+    id: "c2",
+    category: "contabilidade",
+    title: "Assessoria Contábil Mensal Especializada",
+    duration: "Mensal",
+    price: 490,
+    tag: "Tranquilidade Total",
+    rating: "4.9",
+    reviewsCount: 39,
+    desc: "Emissão de notas fiscais, folha de pagamento, cálculo de guias de impostos e relatórios contábeis mensais no prazo.",
+    benefits: ["Evita multas fiscais da Receita Federal", "Atendimento direto com contador especialista", "Plataforma de documentos digitais"]
+  }
+];
+
+const TIME_SLOTS = [
+  "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
+];
 
 export default function ClientPortal({ onBackToAdmin, onBookAppointment }: ClientPortalProps) {
   const [activeTab, setActiveTab] = useState<"estetica" | "saude" | "contabilidade">("estetica");
-  const [selectedService, setSelectedService] = useState<{ title: string; price: number; duration: string } | null>(null);
+  
+  // Fluxo de agendamento em passos (Step-by-step UX)
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1); // 1: Dia/Hora, 2: Dados, 3: Sucesso
 
-  // Form de Agendamento Rápido
+  // Próximos 14 dias gerados dinamicamente
+  const [availableDays, setAvailableDays] = useState<{ iso: string; weekday: string; dayNumber: string; monthName: string; isToday: boolean }[]>([]);
+  const [selectedDayIso, setSelectedDayIso] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("14:00");
+
+  // Dados do formulário do cliente
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [selectedDate, setSelectedDate] = useState("Hoje");
-  const [selectedTime, setSelectedTime] = useState("14:00");
-  const [bookedSuccess, setBookedSuccess] = useState(false);
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientNotes, setClientNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleConfirmBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedService || !clientName || !clientPhone) return;
+  useEffect(() => {
+    // Gera calendário interativo dos próximos 14 dias
+    const days = [];
+    const today = new Date();
+    const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    if (onBookAppointment) {
-      const initials = clientName.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
-      onBookAppointment({
-        id: `cli-portal-${Date.now()}`,
-        clientName,
-        clientInitials: initials || "CL",
-        service: selectedService.title,
-        time: selectedTime,
-        endTime: "15:00",
-        price: selectedService.price,
-        status: "confirmado",
-        date: new Date().toISOString().slice(0, 10),
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      // Pula domingo para consultório/escritório
+      if (d.getDay() === 0) continue;
+
+      const iso = d.toISOString().slice(0, 10);
+      days.push({
+        iso,
+        weekday: i === 0 ? "Hoje" : i === 1 ? "Amanhã" : weekdays[d.getDay()],
+        dayNumber: String(d.getDate()).padStart(2, "0"),
+        monthName: months[d.getMonth()],
+        isToday: i === 0
       });
     }
 
-    setBookedSuccess(true);
-    setTimeout(() => {
-      setBookedSuccess(false);
-      setSelectedService(null);
-      setClientName("");
-      setClientPhone("");
-    }, 2800);
+    setAvailableDays(days);
+    if (days.length > 0) {
+      setSelectedDayIso(days[0].iso);
+    }
+  }, []);
+
+  const handleStartBooking = (service: ServiceItem) => {
+    setSelectedService(service);
+    setCurrentStep(1);
   };
+
+  const handleFinishBooking = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedService || !clientName || !clientPhone) return;
+
+    setIsSubmitting(true);
+
+    const initials = clientName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+
+    const newAppointment: Appointment = {
+      id: `cli-portal-${Date.now()}`,
+      clientName,
+      clientInitials: initials || "CL",
+      service: selectedService.title,
+      time: selectedTime,
+      endTime: "15:00",
+      date: selectedDayIso,
+      price: selectedService.price,
+      status: "confirmado",
+    };
+
+    if (onBookAppointment) {
+      onBookAppointment(newAppointment);
+    }
+
+    // Salva também direto no localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("mia_appointments");
+        const list = stored ? JSON.parse(stored) : [];
+        list.unshift(newAppointment);
+        localStorage.setItem("mia_appointments", JSON.stringify(list));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setCurrentStep(3); // Tela de Sucesso
+    }, 700);
+  };
+
+  const selectedDayObj = availableDays.find((d) => d.iso === selectedDayIso);
+
+  const filteredServices = ALL_SERVICES.filter((s) => s.category === activeTab);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-[#FFC107] selection:text-black">
-      {/* Topo / Navbar do Portal */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
+      {/* Topo / Navbar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-[#111111] text-[#FFC107] font-black text-sm flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-2xl bg-[#111111] text-[#FFC107] font-black text-sm flex items-center justify-center shadow-xs">
             MIA
           </div>
           <div>
             <div className="text-sm font-extrabold text-zinc-900 tracking-tight flex items-center gap-2">
-              <span>Espaço do Cliente</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Agenda Aberta
+              <span>Portal de Agendamento Online</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Vagas Abertas
               </span>
             </div>
             <p className="text-[11px] text-zinc-400">
-              Estética Facial & Corporal • Saúde Integrativa • Assessoria Contábil
+              Escolha seu procedimento e confirme em menos de 1 minuto
             </p>
           </div>
         </div>
@@ -95,128 +275,142 @@ export default function ClientPortal({ onBackToAdmin, onBookAppointment }: Clien
         {onBackToAdmin && (
           <button
             onClick={onBackToAdmin}
-            className="px-3.5 py-1.5 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl transition-all cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1"
           >
-            Painel da Tayná (Admin) →
+            <span>Painel da Tayná (Admin)</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white via-amber-50/20 to-zinc-50 pt-12 pb-16 px-4 text-center">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFF8E7] text-zinc-900 border border-[#FFC107]/50 text-xs font-bold shadow-2xs">
+      {/* Hero Interativo com Seletor de Categorias */}
+      <section className="bg-gradient-to-b from-white via-amber-50/25 to-zinc-50 pt-10 pb-12 px-4 border-b border-zinc-200/60">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FFF8E7] text-zinc-900 border border-[#FFC107]/60 text-xs font-bold shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#FFC107]" />
-            <span>Atendimento Premium & Cuidado Integrado</span>
+            <span>Atendimento Personalizado & Confirmação por WhatsApp</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-zinc-950 tracking-tight leading-tight">
-            Excelência em <span className="underline decoration-[#FFC107] decoration-wavy decoration-from-font">Saúde, Estética</span> e Gestão.
+            Cuidando da sua <span className="underline decoration-[#FFC107] decoration-wavy">saúde, beleza</span> e negócios.
           </h1>
 
-          <p className="text-sm sm:text-base text-zinc-600 max-w-2xl mx-auto leading-relaxed">
-            Agende seu procedimento estético, consulta de saúde preventiva ou assessoria contábil de forma rápida, sem filas e com confirmação direta pelo WhatsApp.
+          <p className="text-xs sm:text-sm text-zinc-600 max-w-xl mx-auto">
+            Sem telefonemas ou esperas. Escolha o serviço desejado abaixo, selecione o melhor dia e horário na agenda e receba o lembrete direto no celular.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <a
-              href="#servicos"
-              className="px-6 py-3 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold text-xs sm:text-sm rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2"
+          {/* Abas Modernas com Pills de Nicho */}
+          <div className="flex items-center justify-center gap-2 max-w-lg mx-auto pt-4">
+            <button
+              onClick={() => setActiveTab("estetica")}
+              className={`flex-1 py-3 px-3 rounded-2xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer border ${
+                activeTab === "estetica"
+                  ? "bg-white border-[#FFC107] text-zinc-950 shadow-md ring-2 ring-[#FFC107]/20"
+                  : "bg-white/80 border-zinc-200 text-zinc-600 hover:border-zinc-300"
+              }`}
             >
-              <Calendar className="w-4 h-4" /> Escolher Horário
-            </a>
-            <a
-              href="https://wa.me/5511999999999?text=Olá!%20Gostaria%20de%20tirar%20uma%20dúvida%20sobre%20os%20atendimentos."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-3 bg-white hover:bg-zinc-100 text-zinc-800 font-bold text-xs sm:text-sm rounded-2xl border border-zinc-200/80 shadow-xs transition-all flex items-center gap-2"
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Beleza & Estética</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("saude")}
+              className={`flex-1 py-3 px-3 rounded-2xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer border ${
+                activeTab === "saude"
+                  ? "bg-white border-rose-500 text-zinc-950 shadow-md ring-2 ring-rose-500/20"
+                  : "bg-white/80 border-zinc-200 text-zinc-600 hover:border-zinc-300"
+              }`}
             >
-              <Phone className="w-4 h-4 text-emerald-600" /> Falar no WhatsApp
-            </a>
+              <HeartPulse className="w-4 h-4 text-rose-500" />
+              <span>Saúde & Bem-estar</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("contabilidade")}
+              className={`flex-1 py-3 px-3 rounded-2xl text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 cursor-pointer border ${
+                activeTab === "contabilidade"
+                  ? "bg-white border-blue-500 text-zinc-950 shadow-md ring-2 ring-blue-500/20"
+                  : "bg-white/80 border-zinc-200 text-zinc-600 hover:border-zinc-300"
+              }`}
+            >
+              <Calculator className="w-4 h-4 text-blue-600" />
+              <span>Contabilidade</span>
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Seção dos 3 Nichos */}
-      <section id="servicos" className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        {/* Filtro dos 3 Nichos */}
-        <div className="flex items-center justify-center gap-2 max-w-md mx-auto p-1.5 bg-zinc-200/60 rounded-2xl">
-          <button
-            onClick={() => setActiveTab("estetica")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "estetica"
-                ? "bg-white text-zinc-950 shadow-sm"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Beleza & Estética</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("saude")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "saude"
-                ? "bg-white text-zinc-950 shadow-sm"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            <HeartPulse className="w-3.5 h-3.5 text-rose-500" />
-            <span>Saúde & Bem-estar</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("contabilidade")}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === "contabilidade"
-                ? "bg-white text-zinc-950 shadow-sm"
-                : "text-zinc-600 hover:text-zinc-900"
-            }`}
-          >
-            <Calculator className="w-3.5 h-3.5 text-blue-600" />
-            <span>Contabilidade</span>
-          </button>
+      {/* Grid de Serviços */}
+      <section className="max-w-6xl mx-auto px-4 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-black text-zinc-900 tracking-tight">
+              Serviços & Procedimentos Disponíveis
+            </h2>
+            <p className="text-xs text-zinc-500">
+              Selecione um item para ver detalhes e escolher a data ideal
+            </p>
+          </div>
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-100 text-zinc-700">
+            {filteredServices.length} opções
+          </span>
         </div>
 
-        {/* Catálogo de Procedimentos/Serviços */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {PROCEDURES_BY_NICHE[activeTab].map((item) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
+          {filteredServices.map((service) => (
             <div
-              key={item.id}
-              className="bg-white rounded-3xl border border-zinc-200/80 p-5 shadow-xs hover:border-[#FFC107] hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+              key={service.id}
+              className="bg-white rounded-3xl border border-zinc-200/80 p-6 shadow-xs hover:border-[#FFC107] hover:shadow-lg transition-all flex flex-col justify-between space-y-4 group"
             >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                    {item.tag}
+              <div className="space-y-3">
+                {/* Header do Card */}
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[10px] font-extrabold px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80">
+                    {service.tag}
                   </span>
-                  <span className="text-xs text-zinc-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {item.duration}
-                  </span>
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-amber-500 bg-amber-50/50 px-2 py-0.5 rounded-lg">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    <span>{service.rating}</span>
+                    <span className="text-zinc-400 font-normal">({service.reviewsCount})</span>
+                  </div>
                 </div>
 
-                <h3 className="font-extrabold text-sm sm:text-base text-zinc-900">
-                  {item.title}
+                <h3 className="font-black text-base text-zinc-900 group-hover:text-amber-800 transition-colors leading-snug">
+                  {service.title}
                 </h3>
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  {item.desc}
+
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  {service.desc}
                 </p>
+
+                {/* Benefícios rápidos */}
+                <div className="space-y-1.5 pt-1">
+                  {service.benefits.map((benefit, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[11px] text-zinc-600">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="pt-3 border-t border-zinc-100 flex items-center justify-between">
+              {/* Rodapé do Card com Preço e Ação */}
+              <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] text-zinc-400 font-bold uppercase">Investimento</div>
-                  <div className="text-lg font-black text-zinc-950">
-                    {item.price === 0 ? "Gratuito" : `R$ ${item.price.toFixed(2).replace(".", ",")}`}
+                  <div className="text-[10px] text-zinc-400 font-bold uppercase flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {service.duration}
+                  </div>
+                  <div className="text-xl font-black text-zinc-950 mt-0.5">
+                    {service.price === 0 ? "Gratuito" : `R$ ${service.price.toFixed(2).replace(".", ",")}`}
                   </div>
                 </div>
 
                 <button
-                  onClick={() => setSelectedService(item)}
-                  className="px-4 py-2 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold text-xs rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                  onClick={() => handleStartBooking(service)}
+                  className="px-5 py-2.5 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold text-xs rounded-2xl shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
-                  <span>Agendar</span>
-                  <ArrowRight className="w-3 h-3 stroke-[3]" />
+                  <span>Agendar Horário</span>
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                 </button>
               </div>
             </div>
@@ -224,118 +418,291 @@ export default function ClientPortal({ onBackToAdmin, onBookAppointment }: Clien
         </div>
       </section>
 
-      {/* MODAL DE AGENDAMENTO RÁPIDO DO CLIENTE */}
+      {/* MODAL MODERNO DE AGENDAMENTO (CALENDÁRIO + DADOS DO CLIENTE) */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-zinc-100 space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Header do Modal com Barra de Etapas */}
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
               <div>
-                <h3 className="text-sm font-extrabold text-zinc-900">
-                  Confirmar Agendamento
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                  {currentStep === 1 ? "Etapa 1 de 2: Data e Horário" : currentStep === 2 ? "Etapa 2 de 2: Seus Dados" : "Agendamento Concluído"}
+                </span>
+                <h3 className="text-base font-black text-zinc-900 mt-1">
+                  {selectedService.title}
                 </h3>
-                <p className="text-[11px] text-zinc-400">
-                  {selectedService.title} • {selectedService.duration}
-                </p>
               </div>
               <button
                 onClick={() => setSelectedService(null)}
-                className="text-zinc-400 hover:text-zinc-600 p-1 rounded-lg"
+                className="text-zinc-400 hover:text-zinc-800 p-1.5 rounded-xl hover:bg-zinc-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            {bookedSuccess ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-                <h4 className="text-sm font-bold text-emerald-900">
-                  Agendamento Solicitado com Sucesso!
-                </h4>
-                <p className="text-xs text-emerald-700">
-                  Nossa equipe e a IA MIA receberam sua solicitação no sistema e entrarão em contato no WhatsApp informado.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleConfirmBooking} className="space-y-3 text-xs">
+            {/* ETAPA 1: ESCOLHA VISUAL DO DIA E HORÁRIO */}
+            {currentStep === 1 && (
+              <div className="space-y-5">
+                {/* 1. Seleção de Dia (Carrossel Horizontal de Dias) */}
                 <div>
-                  <label className="block font-bold text-zinc-700 mb-1">Seu Nome Completo *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Beatriz Albuquerque"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
-                  />
-                </div>
+                  <label className="block text-xs font-extrabold text-zinc-800 mb-2 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-[#FFC107]" />
+                    <span>1. Escolha o melhor dia:</span>
+                  </label>
 
-                <div>
-                  <label className="block font-bold text-zinc-700 mb-1">WhatsApp de Contato *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="(11) 99999-8888"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                    className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block font-bold text-zinc-700 mb-1">Dia Preferido</label>
-                    <select
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl font-bold"
-                    >
-                      <option value="Hoje">Hoje</option>
-                      <option value="Amanhã">Amanhã</option>
-                      <option value="Segunda">Segunda-feira</option>
-                      <option value="Terça">Terça-feira</option>
-                      <option value="Quarta">Quarta-feira</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-zinc-700 mb-1">Horário</label>
-                    <select
-                      value={selectedTime}
-                      onChange={(e) => setSelectedTime(e.target.value)}
-                      className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded-xl font-bold"
-                    >
-                      <option value="09:00">09:00</option>
-                      <option value="11:00">11:00</option>
-                      <option value="14:00">14:00</option>
-                      <option value="16:00">16:00</option>
-                      <option value="18:00">18:00</option>
-                    </select>
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    {availableDays.map((day) => {
+                      const isSelected = selectedDayIso === day.iso;
+                      return (
+                        <button
+                          key={day.iso}
+                          type="button"
+                          onClick={() => setSelectedDayIso(day.iso)}
+                          className={`flex flex-col items-center justify-center p-3 rounded-2xl min-w-[70px] border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-zinc-900 text-white border-zinc-900 shadow-md ring-2 ring-[#FFC107]"
+                              : "bg-zinc-50 border-zinc-200/80 text-zinc-700 hover:bg-zinc-100"
+                          }`}
+                        >
+                          <span className={`text-[10px] font-bold ${isSelected ? "text-amber-400" : "text-zinc-400"}`}>
+                            {day.weekday}
+                          </span>
+                          <span className="text-base font-black my-0.5">
+                            {day.dayNumber}
+                          </span>
+                          <span className="text-[9px] uppercase font-bold text-zinc-400">
+                            {day.monthName}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-xl flex items-center justify-between">
-                  <span className="font-semibold text-zinc-600">Total a Pagar no Local:</span>
-                  <span className="font-black text-sm text-zinc-950">
-                    {selectedService.price === 0 ? "Gratuito" : `R$ ${selectedService.price.toFixed(2).replace(".", ",")}`}
-                  </span>
+                {/* 2. Seleção de Horário (Grade de Slots) */}
+                <div>
+                  <label className="block text-xs font-extrabold text-zinc-800 mb-2 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-[#FFC107]" />
+                    <span>2. Escolha o horário de início:</span>
+                  </label>
+
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-44 overflow-y-auto p-1">
+                    {TIME_SLOTS.map((time) => {
+                      const isSelected = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => setSelectedTime(time)}
+                          className={`py-2 px-1 text-center rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-[#FFC107] border-[#FFC107] text-black shadow-xs font-black scale-105"
+                              : "bg-white border-zinc-200/80 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="pt-2 flex gap-2">
+                {/* Resumo da Escolha */}
+                <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-zinc-400 font-semibold block text-[10px]">Data selecionada:</span>
+                    <span className="font-extrabold text-zinc-900">
+                      {selectedDayObj?.weekday}, {selectedDayObj?.dayNumber} de {selectedDayObj?.monthName} às {selectedTime}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-zinc-400 font-semibold block text-[10px]">Valor do atendimento:</span>
+                    <span className="font-black text-sm text-zinc-950">
+                      {selectedService.price === 0 ? "Cortesia" : `R$ ${selectedService.price.toFixed(2).replace(".", ",")}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botão para Avançar */}
+                <div className="flex items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => setSelectedService(null)}
-                    className="flex-1 py-2 text-zinc-600 font-bold border border-zinc-200 rounded-xl hover:bg-zinc-50"
+                    className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800"
                   >
-                    Cancelar
+                    Voltar
                   </button>
                   <button
-                    type="submit"
-                    className="flex-1 py-2 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold rounded-xl shadow-xs transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => setCurrentStep(2)}
+                    className="px-6 py-2.5 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    Confirmar Vaga
+                    <span>Continuar</span>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ETAPA 2: DADOS DO CLIENTE & CONFIRMAÇÃO */}
+            {currentStep === 2 && (
+              <form onSubmit={handleFinishBooking} className="space-y-4">
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-extrabold text-zinc-800 mb-1">
+                      Seu Nome Completo *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Mariana Silva Gonçalves"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-extrabold text-zinc-800 mb-1">
+                      WhatsApp para Confirmação *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="(11) 98765-4321"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                    />
+                    <span className="text-[10px] text-zinc-400 mt-1 block">
+                      Enviaremos o lembrete e instruções do procedimento por aqui.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-extrabold text-zinc-800 mb-1">
+                      E-mail (Opcional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="mariana@exemplo.com"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-extrabold text-zinc-800 mb-1">
+                      Alguma observação ou necessidade especial?
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Ex: Tenho pele sensível / prefiro profissional mulher / é minha primeira vez..."
+                      value={clientNotes}
+                      onChange={(e) => setClientNotes(e.target.value)}
+                      className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                    />
+                  </div>
+                </div>
+
+                {/* Box de Resumo Final */}
+                <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded-2xl text-[11px] text-amber-950 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Resumo do Horário Selecionado:</span>
+                  </div>
+                  <div className="text-zinc-700">
+                    <strong>{selectedService.title}</strong> — {selectedDayObj?.weekday}, {selectedDayObj?.dayNumber} de {selectedDayObj?.monthName} às <strong>{selectedTime}</strong> ({selectedService.duration})
+                  </div>
+                  <div className="text-[10px] text-zinc-500 pt-1">
+                    Pagamento realizado diretamente no local no dia do procedimento.
+                  </div>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(1)}
+                    className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-800 flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Voltar ao Calendário
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-[#FFC107] hover:bg-[#ffb300] text-black font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span>Confirmando...</span>
+                    ) : (
+                      <>
+                        <span>Finalizar Agendamento</span>
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* ETAPA 3: TELA DE SUCESSO / CONFIRMAÇÃO */}
+            {currentStep === 3 && (
+              <div className="text-center py-6 space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+                  <CheckCircle2 className="w-9 h-9 stroke-[2.5]" />
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="text-lg font-black text-zinc-950">
+                    Agendamento Confirmado com Sucesso!
+                  </h4>
+                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                    Muito obrigado, <strong>{clientName}</strong>! Sua vaga foi reservada no sistema.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-zinc-50 border border-zinc-200/80 rounded-2xl max-w-md mx-auto text-left text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-400 font-semibold">Procedimento:</span>
+                    <span className="font-bold text-zinc-900">{selectedService.title}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-400 font-semibold">Data e Horário:</span>
+                    <span className="font-extrabold text-emerald-700">
+                      {selectedDayObj?.weekday}, {selectedDayObj?.dayNumber} de {selectedDayObj?.monthName} às {selectedTime}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-400 font-semibold">WhatsApp informado:</span>
+                    <span className="font-mono text-zinc-800">{clientPhone}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <a
+                    href={`https://wa.me/5511999999999?text=Olá!%20Acabei%20de%20agendar%20meu%20horário%20para%20${encodeURIComponent(selectedService.title)}%20às%20${selectedTime}.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Falar com Atendimento no WhatsApp</span>
+                  </a>
+
+                  <button
+                    onClick={() => {
+                      setSelectedService(null);
+                      setCurrentStep(1);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
