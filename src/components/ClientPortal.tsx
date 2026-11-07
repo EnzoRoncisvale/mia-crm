@@ -292,7 +292,7 @@ export default function ClientPortal({ onBackToAdmin, onBookAppointment }: Clien
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-zinc-950 tracking-tight leading-tight">
-            Cuidando da sua <span className="underline decoration-[#FFC107] decoration-wavy">saúde, beleza</span> e negócios.
+            Cuidando da sua saúde, beleza e negócios.
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-600 max-w-xl mx-auto">
