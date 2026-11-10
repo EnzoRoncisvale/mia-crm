@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from "react";
 import {
   Calendar, Clock, CheckCircle2, Phone, ArrowRight, ShieldCheck,
-  Star, Check, ChevronRight, ArrowLeft, MessageSquare, Award, Zap, Sparkles
+  Star, Check, ChevronRight, ArrowLeft, MessageSquare, Award, Zap, Sparkles,
+  User, LogOut, Lock
 } from "lucide-react";
 import { Appointment } from "@/types/crm";
+import { useClientAuth } from "@/context/ClientAuthContext";
+import ClientAuthModal from "@/components/ClientAuthModal";
 
 export interface ServiceProposal {
   id: string;
@@ -48,8 +51,14 @@ export default function DedicatedNicheLandingPage({
   proposals,
   onBookAppointment,
 }: DedicatedNicheLandingPageProps) {
+  const { user, isAuthenticated, logout, updatePhone } = useClientAuth();
+
   const [selectedPackage, setSelectedPackage] = useState<ServiceProposal | null>(null);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+
+  // Modal de Autenticação (Login / Cadastro)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingPackageToBook, setPendingPackageToBook] = useState<ServiceProposal | null>(null);
 
   // Dias disponíveis
   const [availableDays, setAvailableDays] = useState<{ iso: string; weekday: string; dayNumber: string; monthName: string }[]>([]);
@@ -62,6 +71,15 @@ export default function DedicatedNicheLandingPage({
   const [clientEmail, setClientEmail] = useState("");
   const [clientNotes, setClientNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pré-preenche os dados se o usuário já estiver logado
+  useEffect(() => {
+    if (user) {
+      setClientName(user.name);
+      setClientEmail(user.email);
+      if (user.phone) setClientPhone(user.phone);
+    }
+  }, [user]);
 
   useEffect(() => {
     const days = [];
@@ -89,9 +107,28 @@ export default function DedicatedNicheLandingPage({
     }
   }, []);
 
+  // Ao clicar em agendar, verifica se o cliente está logado
   const handleOpenBooking = (pkg: ServiceProposal) => {
+    if (!isAuthenticated) {
+      // Abre modal de login / cadastro obrigatório
+      setPendingPackageToBook(pkg);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // Se já está logado, prossegue normalmente
     setSelectedPackage(pkg);
     setCurrentStep(1);
+  };
+
+  // Callback chamado quando o login ou cadastro conclui com sucesso
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    if (pendingPackageToBook) {
+      setSelectedPackage(pendingPackageToBook);
+      setPendingPackageToBook(null);
+      setCurrentStep(1);
+    }
   };
 
   const handleFinishBooking = (e: React.FormEvent) => {
@@ -99,6 +136,11 @@ export default function DedicatedNicheLandingPage({
     if (!selectedPackage || !clientName || !clientPhone) return;
 
     setIsSubmitting(true);
+
+    // Salva o telefone no perfil do cliente logado se ainda não tinha
+    if (user && !user.phone) {
+      updatePhone(clientPhone);
+    }
 
     const initials = clientName
       .split(" ")
@@ -144,7 +186,7 @@ export default function DedicatedNicheLandingPage({
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-[#FFC107] selection:text-black">
-      {/* Header com navegação para voltar */}
+      {/* Header com identificação de usuário logado */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
           <a
@@ -156,13 +198,40 @@ export default function DedicatedNicheLandingPage({
           </a>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-zinc-500 hidden sm:inline">
-            Clínica & Espaço Tayná
-          </span>
+        {/* Status de Login do Cliente */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2 bg-zinc-100/80 border border-zinc-200/80 rounded-2xl px-3 py-1 text-xs">
+              <div className="w-6 h-6 rounded-full bg-[#FFC107] text-black font-extrabold text-[10px] flex items-center justify-center">
+                {user.name.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="font-bold text-zinc-800 max-w-[120px] sm:max-w-none truncate">
+                Olá, {user.name.split(" ")[0]}
+              </span>
+              <button
+                onClick={logout}
+                title="Desconectar da conta"
+                className="text-zinc-400 hover:text-red-600 transition-colors ml-1 p-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setPendingPackageToBook(null);
+                setIsAuthModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold bg-[#FFF8E7] text-amber-900 border border-[#FFC107]/50 hover:bg-[#FFC107]/20 px-3 py-1.5 rounded-xl transition-all"
+            >
+              <User className="w-3.5 h-3.5 text-[#FFC107]" />
+              <span>Entrar / Cadastrar</span>
+            </button>
+          )}
+
           <a
             href="/"
-            className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl transition-all"
+            className="px-3 py-1.5 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl transition-all hidden sm:inline"
           >
             Painel Admin →
           </a>
@@ -321,7 +390,7 @@ export default function DedicatedNicheLandingPage({
                     <Clock className="w-3 h-3" /> {pkg.durationTotal}
                   </span>
                   <span>•</span>
-                  <span>Pagamento facilitado no local</span>
+                  <span>{!isAuthenticated ? "Requer login ou cadastro rápido" : "Logada como cliente"}</span>
                 </div>
               </div>
             </div>
@@ -336,7 +405,7 @@ export default function DedicatedNicheLandingPage({
             <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
-                  {currentStep === 1 ? "Passo 1 de 2: Escolha o Dia e Horário" : currentStep === 2 ? "Passo 2 de 2: Seus Dados" : "Horário Reservado!"}
+                  {currentStep === 1 ? "Passo 1 de 2: Escolha o Dia e Horário" : currentStep === 2 ? "Passo 2 de 2: Confirmação dos Dados" : "Horário Reservado!"}
                 </span>
                 <h3 className="text-base font-black text-zinc-900 mt-1">
                   {selectedPackage.title}
@@ -487,14 +556,17 @@ export default function DedicatedNicheLandingPage({
 
                   <div>
                     <label className="block font-extrabold text-zinc-800 mb-1">
-                      E-mail (Opcional)
+                      E-mail Cadastrado
                     </label>
                     <input
                       type="email"
+                      readOnly={!!user}
                       placeholder="beatriz@exemplo.com"
                       value={clientEmail}
                       onChange={(e) => setClientEmail(e.target.value)}
-                      className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFC107]"
+                      className={`w-full p-3 border rounded-xl focus:outline-none ${
+                        user ? "bg-zinc-100 text-zinc-500 border-zinc-200 cursor-not-allowed" : "bg-zinc-50 border-zinc-200"
+                      }`}
                     />
                   </div>
 
@@ -613,6 +685,17 @@ export default function DedicatedNicheLandingPage({
           </div>
         </div>
       )}
+
+      {/* Modal de Autenticação (Login ou Cadastro) */}
+      <ClientAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingPackageToBook(null);
+        }}
+        onSuccess={handleAuthSuccess}
+        serviceTitle={pendingPackageToBook?.title}
+      />
     </div>
   );
 }

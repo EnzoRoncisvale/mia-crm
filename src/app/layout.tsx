@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { ClientAuthProvider } from "@/context/ClientAuthContext";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -26,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${poppins.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans selection:bg-[#FFC107] selection:text-black">
-        {children}
+        <ClientAuthProvider>
+          {children}
+        </ClientAuthProvider>
       </body>
     </html>
   );
