@@ -26,7 +26,6 @@ export default function AgendarPage() {
             window.location.href = "/";
           }
         }}
-        onBookAppointment={handleBook}
       />
       <FooterCorporate />
     </div>

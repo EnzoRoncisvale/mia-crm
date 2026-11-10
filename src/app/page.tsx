@@ -150,7 +150,6 @@ export default function Home() {
       <div className="min-h-screen bg-zinc-50 flex flex-col">
         <ClientPortal
           onBackToAdmin={() => setViewMode("admin")}
-          onBookAppointment={(app) => handleAddAppointment(app)}
         />
         <FooterCorporate />
       </div>
